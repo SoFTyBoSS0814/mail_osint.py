@@ -1,20 +1,33 @@
 import json
 import os
 import requests
+import traceback
 from playwright.sync_api import sync_playwright
 
 def load_configurations():
-    """Beolvassa a loads.json és cookies.json fájtokat."""
+    """Beolvassa a loads.json és cookies.json fájtokat biztonságosan."""
     loads = {}
     cookies = {}
     
     if os.path.exists("loads.json"):
-        with open("loads.json", "r", encoding="utf-8") as f:
-            loads = json.load(f)
+        try:
+            with open("loads.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    loads = data
+                else:
+                    print("[!] Hiba: A loads.json fájlnak szótárral ({} jelöléssel) kell kezdődnie!")
+        except Exception as e:
+            print(f"[!] Hiba a loads.json elemzésekor: {e}")
             
     if os.path.exists("cookies.json"):
-        with open("cookies.json", "r", encoding="utf-8") as f:
-            cookies = json.load(f)
+        try:
+            with open("cookies.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, (dict, list)):
+                    cookies = data
+        except Exception as e:
+            print(f"[!] Hiba a cookies.json elemzésekor: {e}")
             
     return loads, cookies
 
@@ -33,23 +46,16 @@ def check_goldengate(email: str, config: dict) -> str:
 
         try:
             page.goto(url, timeout=60000)
-            
-            # Várkód a Cloudflare-re és az elemek betöltődésére
             page.wait_for_timeout(4000)
 
-            # E-mail mező kitöltése (biztosítva, hogy létezik)
             page.wait_for_selector("input[name='email']", timeout=10000)
             page.fill("input[name='email']", email)
 
-            # Küldés gomb megnyomása (szöveg vagy típus alapján)
-            # A GoldenGate-en a gomb felirata "Jelszó küldése"
             try:
                 page.click("button:has-text('Jelszó küldése'), input[type='submit']")
             except:
-                # Alternatív kattintási kísérlet, ha az első nem találja
                 page.click("text=Jelszó küldése")
 
-            # Válasz megvárása
             page.wait_for_timeout(3000)
             content = page.content()
 
@@ -76,7 +82,11 @@ def check_gyakorikerdesek(email: str, config: dict, cookies: dict) -> str:
         
     method = config.get("method", "POST").upper()
     
-    cookie_dict = {c['name']: c['value'] for c in cookies} if isinstance(cookies, list) else cookies
+    # Cookie formátum biztonságos kezelése (ha lista vagy dict)
+    if isinstance(cookies, list):
+        cookie_dict = {c.get('name'): c.get('value') for c in cookies if 'name' in c and 'value' in c}
+    else:
+        cookie_dict = cookies
     
     data = config.get("data", {}).copy()
     for key, value in data.items():
@@ -98,20 +108,25 @@ def check_gyakorikerdesek(email: str, config: dict, cookies: dict) -> str:
         return f"[hiba] Requests hiba: {str(e)}"
 
 def main():
-    loads, cookies = load_configurations()
-    target_email = loads.get("target_email", "teszt@pelda.hu")
-    
-    print(f"Cél e-mail ellenőrzése: {target_email}\n" + "---" * 20)
+    try:
+        loads, cookies = load_configurations()
+        target_email = loads.get("target_email", "teszt@pelda.hu")
+        
+        print(f"Cél e-mail ellenőrzése: {target_email}\n" + "---" * 20)
 
-    if "goldengate" in loads:
-        print("[*] GoldenGate.hu ellenőrzése (Playwright)...")
-        gg_result = check_goldengate(target_email, loads["goldengate"])
-        print(f"Eredmény: {gg_result}\n")
+        if "goldengate" in loads:
+            print("[*] GoldenGate.hu ellenőrzése (Playwright)...")
+            gg_result = check_goldengate(target_email, loads["goldengate"])
+            print(f"Eredmény: {gg_result}\n")
 
-    if "gyakorikerdesek" in loads:
-        print("[*] Gyakorikerdesek.hu ellenőrzése (Requests)...")
-        gyk_result = check_gyakorikerdesek(target_email, loads["gyakorikerdesek"], cookies)
-        print(f"Eredmény: {gyk_result}\n")
+        if "gyakorikerdesek" in loads:
+            print("[*] Gyakorikerdesek.hu ellenőrzése (Requests)...")
+            gyk_result = check_gyakorikerdesek(target_email, loads["gyakorikerdesek"], cookies)
+            print(f"Eredmény: {gyk_result}\n")
+            
+    except Exception as e:
+        print("[!] Kritikus hiba lépett fel a futtatás során:")
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()
