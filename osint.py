@@ -25,10 +25,17 @@ def run_osint_check(email_to_check):
         if "User-Agent" not in headers:
             headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-        # Az adott weboldalhoz tartozó sütik betöltése a cookies.json-ből a 'name' alapján
+        # 1. Előzetes GET kérés a munkamenet és a sütik érvényesítéséhez
+        if "gyakorikerdesek" in name.lower() or "gyakorikerdesek.hu" in url:
+            try:
+                session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
+            except Exception:
+                pass
+
+        # 2. Sütik betöltése a cookies.json-ből
         site_cookies = all_cookies.get(name, {})
         for cookie_name, cookie_value in site_cookies.items():
-            session.cookies.set(cookie_name, cookie_value)
+            session.cookies.set(cookie_name, cookie_value, domain="www.gyakorikerdesek.hu")
 
         raw_data = item.get("data", {})
         payload = {}
