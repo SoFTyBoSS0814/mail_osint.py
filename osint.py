@@ -9,7 +9,7 @@ def load_config(file_path):
 def run_osint_check(email_to_check):
     config_list = load_config("loads.json")
     
-    # Létrehozunk egy Session objektumot, ami megőrzi a sütiket és a munkamenetet
+    # Létrehozunk egy Session objektumot a sütik kezeléséhez
     session = requests.Session()
 
     for item in config_list:
@@ -18,20 +18,19 @@ def run_osint_check(email_to_check):
         method = item.get("method", "POST").upper()
         headers = item.get("headers", {})
         
-        # Alapértelmezett User-Agent, ha nincs a JSON-ben
+        # Alapértelmezett User-Agent beállítása, ha hiányzik
         if "User-Agent" not in headers:
             headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-        # Különleges kezelés a Gyakorikerdesek platformhoz:
-        # Először lekérjük a fő/bejelentkezési oldalt, hogy a szerver beállítsa a sütiket (Session)
-        if "gyakorikerdesek.php" in url or "gyakorikerdesek" in name.lower():
+        # Munkamenet indítása a Gyakorikerdesek oldalán a sütikért
+        if "gyakorikerdesek" in name.lower() or "gyakorikerdesek.hu" in url:
             try:
                 session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
             except Exception as e:
                 print(f"[{name}] Hiba a munkamenet indításakor: {e}")
                 continue
 
-        # Dinamikusan kicseréljük a {email} helyőrzőt a vizsgált e-mail címre
+        # Dinamikus e-mail cserélés a payloadban
         raw_data = item.get("data", {})
         payload = {}
         for key, value in raw_data.items():
@@ -51,29 +50,27 @@ def run_osint_check(email_to_check):
                 print(f"[{name}] Nem támogatott metódus: {method}")
                 continue
 
-            # Szabályok ellenőrzése (Rule evaluation)
+            # DEBUG: Kiíratjuk a szerver valós válaszát, hogy lássuk mi történik a háttérben
+            print(f"[DEBUG] Státusz kód: {response.status_code}")
+            print(f"[DEBUG] Válasz szövege:\n{response.text[:400]}")
+            print("-" * 50)
+
+            # Szabályok ellenőrzése
             rule = item.get("rule", {})
-            rule_type = rule.get("type")
             expected_status = rule.get("status")
             expected_contains = rule.get("contains")
 
             status_ok = (response.status_code == expected_status) if expected_status else True
             text_ok = (expected_contains in response.text) if expected_contains else True
 
-            # Eredmény kiértékelése
-            if rule_type == "status_and_text":
-                if status_ok and text_ok:
-                    print(f"[+] [{name}] Találat / Megfelel a feltételnek (A fiók valószínűleg létezik vagy a válasz azonos).")
-                    print(f"Válasz részlet: {response.text[:150]}...")
-                else:
-                    print(f"[-] [{name}] Nincs találat vagy eltérő válasz. Státusz: {response.status_code}")
+            if status_ok and text_ok:
+                print(f"[+] [{name}] Feltétel teljesül (Találat / Megfelelő válasz).")
             else:
-                print(f"[?] [{name}] Ismeretlen rule típus: {rule_type}")
+                print(f"[-] [{name}] A válasz nem felel meg a feltételnek.")
 
         except requests.exceptions.RequestException as e:
             print(f"[!] [{name}] Hálózati hiba történt: {e}")
 
 if __name__ == "__main__":
-    # Teszt e-mail cím megadása
     target_email = input("Add meg az ellenőrizendő e-mail címet: ").strip()
     run_osint_check(target_email)
