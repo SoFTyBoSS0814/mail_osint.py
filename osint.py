@@ -1,73 +1,79 @@
 import json
-import sys
 import requests
 
-def load_json(file_path):
+def load_config():
+    """Betölti a loads.json és cookies.json konfigurációs fájlokat."""
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        print(f"[!] Hiba: A(z) {file_path} fájl nem található.")
-        sys.exit(1)
+        with open('loads.json', 'r', encoding='utf-8') as f:
+            loads = json.load(f)
+    except Exception as e:
+        print(f"Hiba a loads.json betöltésekor: {e}")
+        loads = []
 
-def run_osint_check(email_to_check):
-    config_list = load_json("loads.json")
-    all_cookies = load_json("cookies.json")
-    
-    session = requests.Session()
-
-    for item in config_list:
-        name = item.get("name")
-        url = item.get("url")
-        method = item.get("method", "POST").upper()
-        headers = item.get("headers", {})
+    try:
+        with open('cookies.json', 'r', encoding='utf-8') as f:
+            cookies = json.load(f)
+    except Exception as e:
+        print(f"Hiba a cookies.json betöltésekor: {e}")
+        cookies = {}
         
-        if "User-Agent" not in headers:
-            headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    return loads, cookies
 
-        site_cookies = all_cookies.get(name, {})
-        for cookie_name, cookie_value in site_cookies.items():
-            session.cookies.set(cookie_name, cookie_value, domain="www.gyakorikerdesek.hu")
+def main():
+    email_to_test = input("Add meg a tesztelni kívánt e-mail címet: ").strip()
+    loads, cookies_config = load_config()
 
-        if "gyakorikerdesek" in name.lower() or "gyakorikerdesek.hu" in url:
-            try:
-                session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
-            except Exception:
-                pass
+    if not loads:
+        print("Nincsenek betölthető célpontok a loads.json fájlban.")
+        return
 
-        raw_data = item.get("data", {})
-        payload = {}
-        for key, value in raw_data.items():
-            if isinstance(value, str):
-                payload[key] = value.replace("{email}", email_to_check)
-            else:
-                payload[key] = value
+    for target in loads:
+        name = target.get("name")
+        url = target.get("url")
+        method = target.get("method", "POST").upper()
+        headers = target.get("headers", {})
+        data_template = target.get("data", {})
+        rule = target.get("rule", {})
+
+        # Az {email} helykitöltő cseréje a megadott címre
+        data = {k: v.replace("{email}", email_to_test) for k, v in data_template.items()}
+
+        # Az adott célponthoz tartozó sütik lekérése
+        target_cookies = cookies_config.get(name, {})
+
+        print(f"\n" + "="*50)
+        print(f"Célpont vizsgálata: {name}")
+        print(f"URL: {url}")
+        print("="*50)
 
         try:
             if method == "POST":
-                response = session.post(url, data=payload, headers=headers)
+                response = requests.post(url, headers=headers, data=data, cookies=target_cookies, timeout=10)
             elif method == "GET":
-                response = session.get(url, params=payload, headers=headers)
+                response = requests.get(url, headers=headers, params=data, cookies=target_cookies, timeout=10)
             else:
+                print(f"Ismeretlen HTTP metódus: {method}")
                 continue
 
-            response_text = response.text
+            # --- DEBUG INFORMÁCIÓK ---
+            print(f"[DEBUG] HTTP Státuszkód: {response.status_code}")
+            print(f"[DEBUG] Szerver nyers válasza:\n{response.text}\n")
+            print("-" * 50)
 
-            # Ellenőrzés: Rate-limit vagy blokkolás szűrése a kért hibaüzenettel
-            if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
-                print(f"[!] Nem sikerült a lekérdezés rate-limit miatt, próbáld újra később")
-            elif "nem tartozik regisztráció" in response_text:
-                print(f"[-] [{name}] A fiók NEM létezik (Nincs regisztráció ezzel a címmel).")
+            # Szabályok ellenőrzése
+            expected_status = rule.get("status")
+            contains_text = rule.get("contains")
+
+            status_ok = (response.status_code == expected_status) if expected_status else True
+            contains_ok = (contains_text in response.text) if contains_text else True
+
+            if status_ok and contains_ok:
+                print(f"Eredményértékelés: A megadott szabály (tartalmazza: '{contains_text}') **TELJESÜLT**. A fiók valószínűleg **NEM LÉTEZIK**.")
             else:
-                print(f"[+] [{name}] A fiók LÉTEZIK (vagy érvényes regisztrált e-mail cím).")
+                print(f"Eredményértékelés: A szabály **NEM TELJESÜLT**. Lehet, hogy a fiók **LÉTEZIK**, vagy a szerver eltérő választ adott (pl. rate-limit / anti-enumeration védelem).")
 
-        except requests.exceptions.RequestException:
-            print(f"[!] Hálózati hiba történt a(z) {name} ellenőrzése közben.")
+        except requests.exceptions.RequestException as e:
+            print(f"Hálózati hiba történt a {name} hívásakor: {e}")
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Használat: python3 osint.py <email_cim>")
-        sys.exit(1)
-    
-    target_email = sys.argv[1].strip()
-    run_osint_check(target_email)
+    main()
