@@ -1,13 +1,17 @@
 import json
+import sys
 import requests
 
 def load_config(file_path):
-    with open(file_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"[!] Hiba: A(z) {file_path} fájl nem található.")
+        sys.exit(1)
 
 def run_osint_check(email_to_check):
     config_list = load_config("loads.json")
-    
     session = requests.Session()
 
     for item in config_list:
@@ -19,17 +23,13 @@ def run_osint_check(email_to_check):
         if "User-Agent" not in headers:
             headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
+        # GDPR / Süti fal megkerülése a Gyakorikerdesekhez
         if "gyakorikerdesek" in name.lower() or "gyakorikerdesek.hu" in url:
             try:
-                # 1. Először lekérjük az oldalt
                 session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
-                
-                # 2. Beállítjuk a helyes cookieok sütit, amivel a szerver engedélyezi a kérést
                 session.cookies.set("cookieok", "1", domain="www.gyakorikerdesek.hu")
-                
-            except Exception as e:
-                print(f"[{name}] Hiba a munkamenet indításakor: {e}")
-                continue
+            except Exception:
+                pass
 
         raw_data = item.get("data", {})
         payload = {}
@@ -39,36 +39,30 @@ def run_osint_check(email_to_check):
             else:
                 payload[key] = value
 
-        print(f"[*] Ellenőrzés itt: {name} ({email_to_check})...")
-
         try:
             if method == "POST":
                 response = session.post(url, data=payload, headers=headers)
             elif method == "GET":
                 response = session.get(url, params=payload, headers=headers)
             else:
-                print(f"[{name}] Nem támogatott metódus: {method}")
                 continue
 
-            print(f"[DEBUG] Státusz kód: {response.status_code}")
-            print(f"[DEBUG] Válasz szövege:\n{response.text[:400]}")
-            print("-" * 50)
-
             rule = item.get("rule", {})
-            expected_status = rule.get("status")
-            expected_contains = rule.get("contains")
+            expected_contains = rule.get("contains", "")
 
-            status_ok = (response.status_code == expected_status) if expected_status else True
-            text_ok = (expected_contains in response.text) if expected_contains else True
-
-            if status_ok and text_ok:
-                print(f"[+] [{name}] Feltétel teljesül! A süti hiba elhárult, a válasz most már a helyes bejelentkezési kísérlet eredményét mutatja.")
+            # Eredmény kiértékelése
+            if expected_contains and expected_contains in response.text:
+                print(f"[-] [{name}] A fiók NEM létezik (Nincs regisztráció ezzel a címmel).")
             else:
-                print(f"[-] [{name}] A válasz nem felel meg a feltételnek.")
+                print(f"[+] [{name}] A fiók LÉTEZIK (vagy érvényes regisztrált e-mail cím).")
 
-        except requests.exceptions.RequestException as e:
-            print(f"[!] [{name}] Hálózati hiba történt: {e}")
+        except requests.exceptions.RequestException:
+            print(f"[!] Hálózati hiba történt a(z) {name} ellenőrzése közben.")
 
 if __name__ == "__main__":
-    target_email = input("Add meg az ellenőrizendő e-mail címet: ").strip()
+    if len(sys.argv) < 2:
+        print("Használat: python3 osint.py <email_cim>")
+        sys.exit(1)
+    
+    target_email = sys.argv[1].strip()
     run_osint_check(target_email)
