@@ -1,7 +1,7 @@
 [
   {
     "name": "Gyakorikerdesek",
-    "url": "https://www.gyakorikerdesek.hu/belepes",
+    "url": "https://www.gyakorikerdesek.hu/jquery/belepes.php",
     "method": "POST",
     "headers": {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -10,12 +10,13 @@
       "Referer": "https://www.gyakorikerdesek.hu/belepes"
     },
     "data": {
-      "email": "{email}"
+      "email": "{email}",
+      "password": "dummy_password"
     },
     "rule": {
       "type": "status_and_text",
       "status": 200,
-      "contains": "A megadott e-mail cím nem található"
+      "contains": "A megadott usernév/jelszó párosítás nem megfelelő"
     }
   }
 ]
