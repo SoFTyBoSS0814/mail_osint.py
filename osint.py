@@ -55,7 +55,7 @@ def run_osint_check(email_to_check):
 
             # Ellenőrzés: Rate-limit vagy blokkolás szűrése a kért hibaüzenettel
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
-                print(f"[!] Nem sikerült a lekérdezés, próbáld újra később")
+                print(f"[!] Nem sikerült a lekérdezés rate-limit miatt, próbáld újra később")
             elif "nem tartozik regisztráció" in response_text:
                 print(f"[-] [{name}] A fiók NEM létezik (Nincs regisztráció ezzel a címmel).")
             else:
