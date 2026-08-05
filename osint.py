@@ -25,12 +25,10 @@ def run_osint_check(email_to_check):
         if "User-Agent" not in headers:
             headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-        # 1. Sütik betöltése MÉG A KÉRÉSEK ELŐTT
         site_cookies = all_cookies.get(name, {})
         for cookie_name, cookie_value in site_cookies.items():
             session.cookies.set(cookie_name, cookie_value, domain="www.gyakorikerdesek.hu")
 
-        # 2. Előzetes GET kérés a munkamenet inicializálásához
         if "gyakorikerdesek" in name.lower() or "gyakorikerdesek.hu" in url:
             try:
                 session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
@@ -55,13 +53,13 @@ def run_osint_check(email_to_check):
 
             response_text = response.text
 
-            # 3. Biztonságos kiértékelés
+            # IDEIGLENES DEBUG: Kiírjuk a szerver nyers válaszát
+            print(f"\n[DEBUG SZERVER VÁLASZ]: {response_text}\n")
+
             if "nem tartozik regisztráció" in response_text:
                 print(f"[-] [{name}] A fiók NEM létezik (Nincs regisztráció ezzel a címmel).")
-            elif response.status_code == 200:
-                print(f"[+] [{name}] A fiók LÉTEZIK (vagy érvényes regisztrált e-mail cím).")
             else:
-                print(f"[!] [{name}] Váratlan szerver válasz.")
+                print(f"[+] [{name}] A fiók LÉTEZIK (vagy érvényes regisztrált e-mail cím).")
 
         except requests.exceptions.RequestException:
             print(f"[!] Hálózati hiba történt a(z) {name} ellenőrzése közben.")
