@@ -1,5 +1,13 @@
 {
-    "Gyakorikerdesek": {
+    "Gyakorikerdesek_PasswordReset": {
         "cookieok": "1"
+    },
+    "GoldenGate_PasswordReset": {
+        "PHPSESSID": "vqmu8f0iprec6plfsk9uo4hnhe",
+        "over18_checked": "checked",
+        "_cf_logged_in": "1",
+        "_twpid": "tw.1785969200966.259101806895",
+        "CF_VERIFIED_DEVICE_1": "1785543139",
+        "CF_VERIFIED_DEVICE_f": "1784733809"
     }
 }
