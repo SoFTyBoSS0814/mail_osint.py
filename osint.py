@@ -51,7 +51,7 @@ def check_target(target, email):
     except requests.exceptions.RequestException as e:
         return "ERROR", f"Hálózati hiba: {str(e)}"
 
-def run_email_check(email, config_file="targets.json"):
+def run_email_check(email, config_file="loads.json"):
     print(f"\n{Colors.BOLD}[*] E-mail cím vizsgálata: {email}{Colors.RESET}\n")
     print("-" * 50)
 
