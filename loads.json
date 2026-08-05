@@ -11,7 +11,7 @@
     },
     "data": {
       "email": "{email}",
-      "password": "dummy_password"
+      "password": "dummy_password_123"
     },
     "rule": {
       "type": "status_and_text",
