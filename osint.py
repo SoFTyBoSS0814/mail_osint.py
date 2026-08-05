@@ -12,13 +12,9 @@ def load_json(file_path):
 
 def run_osint_check(email_to_check):
     config_list = load_json("loads.json")
-    cookies = load_json("cookies.json")
+    all_cookies = load_json("cookies.json")
     
     session = requests.Session()
-    
-    # Sütik hozzáadása a session-höz a cookies.json-ből
-    for name_c, value_c in cookies.items():
-        session.cookies.set(name_c, value_c, domain="www.gyakorikerdesek.hu")
 
     for item in config_list:
         name = item.get("name")
@@ -28,6 +24,11 @@ def run_osint_check(email_to_check):
         
         if "User-Agent" not in headers:
             headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+        # Az adott weboldalhoz tartozó sütik betöltése a cookies.json-ből a 'name' alapján
+        site_cookies = all_cookies.get(name, {})
+        for cookie_name, cookie_value in site_cookies.items():
+            session.cookies.set(cookie_name, cookie_value)
 
         raw_data = item.get("data", {})
         payload = {}
