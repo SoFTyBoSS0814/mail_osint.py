@@ -53,10 +53,10 @@ def run_osint_check(email_to_check):
 
             response_text = response.text
 
-            # IDEIGLENES DEBUG: Kiírjuk a szerver nyers válaszát
-            print(f"\n[DEBUG SZERVER VÁLASZ]: {response_text}\n")
-
-            if "nem tartozik regisztráció" in response_text:
+            # Ellenőrzés: Rate-limit vagy blokkolás szűrése a kért hibaüzenettel
+            if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
+                print(f"[!] Nem sikerült a lekérdezés, próbáld újra később")
+            elif "nem tartozik regisztráció" in response_text:
                 print(f"[-] [{name}] A fiók NEM létezik (Nincs regisztráció ezzel a címmel).")
             else:
                 print(f"[+] [{name}] A fiók LÉTEZIK (vagy érvényes regisztrált e-mail cím).")
