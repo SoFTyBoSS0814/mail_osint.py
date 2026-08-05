@@ -10,8 +10,9 @@
       "Referer": "https://www.gyakorikerdesek.hu/belepes"
     },
     "data": {
-      "email": "{email}",
-      "password": "dummy_password_123"
+      "belepes_email": "{email}",
+      "belepes_jelszo": "hibas_jelszo_123",
+      "oldal": "https://www.gyakorikerdesek.hu/"
     },
     "rule": {
       "type": "status_and_text",
