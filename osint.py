@@ -33,10 +33,24 @@ def check_goldengate(email: str, config: dict) -> str:
 
         try:
             page.goto(url, timeout=60000)
-            page.wait_for_timeout(3000)
+            
+            # Várkód a Cloudflare-re és az elemek betöltődésére
+            page.wait_for_timeout(4000)
+
+            # E-mail mező kitöltése (biztosítva, hogy létezik)
+            page.wait_for_selector("input[name='email']", timeout=10000)
             page.fill("input[name='email']", email)
-            page.click("input[name='forgotten_password'], button[type='submit']")
-            page.wait_for_selector("form, .alert, body", timeout=10000)
+
+            # Küldés gomb megnyomása (szöveg vagy típus alapján)
+            # A GoldenGate-en a gomb felirata "Jelszó küldése"
+            try:
+                page.click("button:has-text('Jelszó küldése'), input[type='submit']")
+            except:
+                # Alternatív kattintási kísérlet, ha az első nem találja
+                page.click("text=Jelszó küldése")
+
+            # Válasz megvárása
+            page.wait_for_timeout(3000)
             content = page.content()
 
             if "Nincs ilyen e-mail megadva" in content:
@@ -44,10 +58,10 @@ def check_goldengate(email: str, config: dict) -> str:
             elif "Sikeres" in content or "levél" in content:
                 return "[pozitív] Az e-mail cím regisztrálva van."
             else:
-                return "[ismeretlen] A szerver válasza nem értelmezhető."
+                return "[ismeretlen] A szerver válasza nem értelmezhető (lehet, hogy a Cloudflare blokkolta)."
 
         except Exception as e:
-            return f"[hiba] Hiba történt a folyamat során: {str(e)}"
+            return f"[hiba] Playwright hiba: {str(e)}"
         
         finally:
             browser.close()
@@ -57,11 +71,14 @@ def check_gyakorikerdesek(email: str, config: dict, cookies: dict) -> str:
     Gyakorikerdesek.hu ellenőrzése hagyományos requests alapon.
     """
     url = config.get("url")
+    if not url:
+        return "[hiba] Hiányzik a Gyakorikerdesek URL a loads.json-ból!"
+        
     method = config.get("method", "POST").upper()
     
     cookie_dict = {c['name']: c['value'] for c in cookies} if isinstance(cookies, list) else cookies
     
-    data = config.get("data", {})
+    data = config.get("data", {}).copy()
     for key, value in data.items():
         if value == "{email}":
             data[key] = email
@@ -78,7 +95,7 @@ def check_gyakorikerdesek(email: str, config: dict, cookies: dict) -> str:
             return f"[hiba] Státusz kód: {response.status_code}"
             
     except Exception as e:
-        return f"[hiba] {str(e)}"
+        return f"[hiba] Requests hiba: {str(e)}"
 
 def main():
     loads, cookies = load_configurations()
