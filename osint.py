@@ -2,7 +2,7 @@ import json
 import sys
 import requests
 
-def load_config(file_path):
+def load_json(file_path):
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -11,8 +11,14 @@ def load_config(file_path):
         sys.exit(1)
 
 def run_osint_check(email_to_check):
-    config_list = load_config("loads.json")
+    config_list = load_json("loads.json")
+    cookies = load_json("cookies.json")
+    
     session = requests.Session()
+    
+    # Sütik hozzáadása a session-höz a cookies.json-ből
+    for name_c, value_c in cookies.items():
+        session.cookies.set(name_c, value_c, domain="www.gyakorikerdesek.hu")
 
     for item in config_list:
         name = item.get("name")
@@ -22,14 +28,6 @@ def run_osint_check(email_to_check):
         
         if "User-Agent" not in headers:
             headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-
-        # GDPR / Süti fal megkerülése a Gyakorikerdesekhez
-        if "gyakorikerdesek" in name.lower() or "gyakorikerdesek.hu" in url:
-            try:
-                session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
-                session.cookies.set("cookieok", "1", domain="www.gyakorikerdesek.hu")
-            except Exception:
-                pass
 
         raw_data = item.get("data", {})
         payload = {}
@@ -50,7 +48,6 @@ def run_osint_check(email_to_check):
             rule = item.get("rule", {})
             expected_contains = rule.get("contains", "")
 
-            # Eredmény kiértékelése
             if expected_contains and expected_contains in response.text:
                 print(f"[-] [{name}] A fiók NEM létezik (Nincs regisztráció ezzel a címmel).")
             else:
