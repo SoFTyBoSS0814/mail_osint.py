@@ -1,7 +1,6 @@
 import json
 import requests
 
-# 1. Beolvassuk a konfigurációt a loads.json-ből
 def load_config(file_path):
     with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
@@ -9,7 +8,6 @@ def load_config(file_path):
 def run_osint_check(email_to_check):
     config_list = load_config("loads.json")
     
-    # Létrehozunk egy Session objektumot a sütik kezeléséhez
     session = requests.Session()
 
     for item in config_list:
@@ -18,28 +16,21 @@ def run_osint_check(email_to_check):
         method = item.get("method", "POST").upper()
         headers = item.get("headers", {})
         
-        # Alapértelmezett User-Agent beállítása, ha hiányzik
         if "User-Agent" not in headers:
             headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-        # Munkamenet indítása a Gyakorikerdesek oldalán a sütikért
         if "gyakorikerdesek" in name.lower() or "gyakorikerdesek.hu" in url:
             try:
-                # Lekérjük a belépési oldalt
-                response_get = session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
-                print(f"[DEBUG] GET státusz: {response_get.status_code}")
-                print(f"[DEBUG] Kapott sütik a GET után: {session.cookies.get_dict()}")
+                # 1. Először lekérjük az oldalt
+                session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
                 
-                # Ha a szerver nem adott sütit a cookie elfogadásra, megpróbáljuk kézzel beállítani 
-                # (A legtöbb oldal ilyenkor egy "cookie_consent", "gdpr" vagy hasonló sütit vár)
-                session.cookies.set("cookie_consent", "1", domain="www.gyakorikerdesek.hu")
-                session.cookies.set("sutik", "1", domain="www.gyakorikerdesek.hu")
+                # 2. Beállítjuk a helyes cookieok sütit, amivel a szerver engedélyezi a kérést
+                session.cookies.set("cookieok", "1", domain="www.gyakorikerdesek.hu")
                 
             except Exception as e:
                 print(f"[{name}] Hiba a munkamenet indításakor: {e}")
                 continue
 
-        # Dinamikus e-mail cserélés a payloadban
         raw_data = item.get("data", {})
         payload = {}
         for key, value in raw_data.items():
@@ -59,12 +50,10 @@ def run_osint_check(email_to_check):
                 print(f"[{name}] Nem támogatott metódus: {method}")
                 continue
 
-            # DEBUG: Kiíratjuk a szerver valós válaszát
-            print(f"[DEBUG] POST Státusz kód: {response.status_code}")
+            print(f"[DEBUG] Státusz kód: {response.status_code}")
             print(f"[DEBUG] Válasz szövege:\n{response.text[:400]}")
             print("-" * 50)
 
-            # Szabályok ellenőrzése
             rule = item.get("rule", {})
             expected_status = rule.get("status")
             expected_contains = rule.get("contains")
@@ -73,9 +62,9 @@ def run_osint_check(email_to_check):
             text_ok = (expected_contains in response.text) if expected_contains else True
 
             if status_ok and text_ok:
-                print(f"[+] [{name}] Feltétel teljesül (A cookie hiba eltűnt, jöhet a válasz elemzése!).")
+                print(f"[+] [{name}] Feltétel teljesül! A süti hiba elhárult, a válasz most már a helyes bejelentkezési kísérlet eredményét mutatja.")
             else:
-                print(f"[-] [{name}] A válasz továbbra sem felel meg a feltételnek.")
+                print(f"[-] [{name}] A válasz nem felel meg a feltételnek.")
 
         except requests.exceptions.RequestException as e:
             print(f"[!] [{name}] Hálózati hiba történt: {e}")
