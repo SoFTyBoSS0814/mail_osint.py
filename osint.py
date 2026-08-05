@@ -25,7 +25,16 @@ def run_osint_check(email_to_check):
         # Munkamenet indítása a Gyakorikerdesek oldalán a sütikért
         if "gyakorikerdesek" in name.lower() or "gyakorikerdesek.hu" in url:
             try:
-                session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
+                # Lekérjük a belépési oldalt
+                response_get = session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
+                print(f"[DEBUG] GET státusz: {response_get.status_code}")
+                print(f"[DEBUG] Kapott sütik a GET után: {session.cookies.get_dict()}")
+                
+                # Ha a szerver nem adott sütit a cookie elfogadásra, megpróbáljuk kézzel beállítani 
+                # (A legtöbb oldal ilyenkor egy "cookie_consent", "gdpr" vagy hasonló sütit vár)
+                session.cookies.set("cookie_consent", "1", domain="www.gyakorikerdesek.hu")
+                session.cookies.set("sutik", "1", domain="www.gyakorikerdesek.hu")
+                
             except Exception as e:
                 print(f"[{name}] Hiba a munkamenet indításakor: {e}")
                 continue
@@ -50,8 +59,8 @@ def run_osint_check(email_to_check):
                 print(f"[{name}] Nem támogatott metódus: {method}")
                 continue
 
-            # DEBUG: Kiíratjuk a szerver valós válaszát, hogy lássuk mi történik a háttérben
-            print(f"[DEBUG] Státusz kód: {response.status_code}")
+            # DEBUG: Kiíratjuk a szerver valós válaszát
+            print(f"[DEBUG] POST Státusz kód: {response.status_code}")
             print(f"[DEBUG] Válasz szövege:\n{response.text[:400]}")
             print("-" * 50)
 
@@ -64,9 +73,9 @@ def run_osint_check(email_to_check):
             text_ok = (expected_contains in response.text) if expected_contains else True
 
             if status_ok and text_ok:
-                print(f"[+] [{name}] Feltétel teljesül (Találat / Megfelelő válasz).")
+                print(f"[+] [{name}] Feltétel teljesül (A cookie hiba eltűnt, jöhet a válasz elemzése!).")
             else:
-                print(f"[-] [{name}] A válasz nem felel meg a feltételnek.")
+                print(f"[-] [{name}] A válasz továbbra sem felel meg a feltételnek.")
 
         except requests.exceptions.RequestException as e:
             print(f"[!] [{name}] Hálózati hiba történt: {e}")
