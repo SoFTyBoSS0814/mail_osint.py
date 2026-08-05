@@ -1,84 +1,79 @@
-import requests
-import sys
 import json
+import requests
 
-class Colors:
-    GREEN = '\033[92m'
-    RED = '\033[91m'
-    YELLOW = '\033[93m'
-    RESET = '\033[0m'
-    BOLD = '\033[1m'
+# 1. Beolvassuk a konfigurációt a loads.json-ből
+def load_config(file_path):
+    with open(file_path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-def evaluate_rule(response, rule):
-    """
-    Dinamikusan kiértékeli a JSON-ben megadott szabályt a válaszra.
-    """
-    rule_type = rule.get("type")
+def run_osint_check(email_to_check):
+    config_list = load_config("loads.json")
     
-    if rule_type == "status_and_text":
-        expected_status = rule.get("status", 200)
-        contains_text = rule.get("contains", "")
-        return response.status_code == expected_status and contains_text in response.text
+    # Létrehozunk egy Session objektumot, ami megőrzi a sütiket és a munkamenetet
+    session = requests.Session()
+
+    for item in config_list:
+        name = item.get("name")
+        url = item.get("url")
+        method = item.get("method", "POST").upper()
+        headers = item.get("headers", {})
         
-    elif rule_type == "status_only":
-        return response.status_code == rule.get("status", 200)
-        
-    return False
+        # Alapértelmezett User-Agent, ha nincs a JSON-ben
+        if "User-Agent" not in headers:
+            headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-def check_target(target, email):
-    # Dinamikusan behelyettesítjük az e-mail címet a data mezőkbe
-    url = target["url"]
-    method = target["method"].upper()
-    headers = target["headers"]
-    
-    # Adatok előkészítése (ha a data egy dictionary, átalakítjuk sztringgé a helyettesítéshez, majd vissza)
-    data_str = json.dumps(target["data"]).replace("{email}", email)
-    data = json.loads(data_str)
+        # Különleges kezelés a Gyakorikerdesek platformhoz:
+        # Először lekérjük a fő/bejelentkezési oldalt, hogy a szerver beállítsa a sütiket (Session)
+        if "gyakorikerdesek.php" in url or "gyakorikerdesek" in name.lower():
+            try:
+                session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
+            except Exception as e:
+                print(f"[{name}] Hiba a munkamenet indításakor: {e}")
+                continue
 
-    try:
-        if method == 'POST':
-            response = requests.post(url, headers=headers, json=data, timeout=10)
-        elif method == 'GET':
-            response = requests.get(url, headers=headers, params=data, timeout=10)
-        else:
-            return "UNKNOWN", "Nem támogatott HTTP metódus"
+        # Dinamikusan kicseréljük a {email} helyőrzőt a vizsgált e-mail címre
+        raw_data = item.get("data", {})
+        payload = {}
+        for key, value in raw_data.items():
+            if isinstance(value, str):
+                payload[key] = value.replace("{email}", email_to_check)
+            else:
+                payload[key] = value
 
-        if evaluate_rule(response, target["rule"]):
-            return "FOUND", f"Regisztrálva / Létezik (Status: {response.status_code})"
-        else:
-            return "NOT_FOUND", f"Nincs regisztrálva (Status: {response.status_code})"
+        print(f"[*] Ellenőrzés itt: {name} ({email_to_check})...")
 
-    except requests.exceptions.RequestException as e:
-        return "ERROR", f"Hálózati hiba: {str(e)}"
+        try:
+            if method == "POST":
+                response = session.post(url, data=payload, headers=headers)
+            elif method == "GET":
+                response = session.get(url, params=payload, headers=headers)
+            else:
+                print(f"[{name}] Nem támogatott metódus: {method}")
+                continue
 
-def run_email_check(email, config_file="loads.json"):
-    print(f"\n{Colors.BOLD}[*] E-mail cím vizsgálata: {email}{Colors.RESET}\n")
-    print("-" * 50)
+            # Szabályok ellenőrzése (Rule evaluation)
+            rule = item.get("rule", {})
+            rule_type = rule.get("type")
+            expected_status = rule.get("status")
+            expected_contains = rule.get("contains")
 
-    try:
-        with open(config_file, "r", encoding="utf-8") as f:
-            targets = json.load(f)
-    except FileNotFoundError:
-        print(f"{Colors.RED}[!] Hiba: A(z) {config_file} fájl nem található!{Colors.RESET}")
-        return
+            status_ok = (response.status_code == expected_status) if expected_status else True
+            text_ok = (expected_contains in response.text) if expected_contains else True
 
-    for target in targets:
-        status, message = check_target(target, email)
-        name = target["name"]
+            # Eredmény kiértékelése
+            if rule_type == "status_and_text":
+                if status_ok and text_ok:
+                    print(f"[+] [{name}] Találat / Megfelel a feltételnek (A fiók valószínűleg létezik vagy a válasz azonos).")
+                    print(f"Válasz részlet: {response.text[:150]}...")
+                else:
+                    print(f"[-] [{name}] Nincs találat vagy eltérő válasz. Státusz: {response.status_code}")
+            else:
+                print(f"[?] [{name}] Ismeretlen rule típus: {rule_type}")
 
-        if status == "FOUND":
-            print(f"[{Colors.GREEN}+{Colors.RESET}] {name}: {Colors.GREEN}{message}{Colors.RESET}")
-        elif status == "NOT_FOUND":
-            print(f"[{Colors.RED}-{Colors.RESET}] {name}: {Colors.YELLOW}{message}{Colors.RESET}")
-        else:
-            print(f"[{Colors.BOLD}?{Colors.RESET}] {name}: {message}")
-
-    print("-" * 50)
+        except requests.exceptions.RequestException as e:
+            print(f"[!] [{name}] Hálózati hiba történt: {e}")
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(f"Használat: python {sys.argv[0]} <email_cim>")
-        sys.exit(1)
-
-    target_email = sys.argv[1]
-    run_email_check(target_email)
+    # Teszt e-mail cím megadása
+    target_email = input("Add meg az ellenőrizendő e-mail címet: ").strip()
+    run_osint_check(target_email)
