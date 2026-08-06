@@ -13,7 +13,6 @@ def load_json(file_path):
 def run_osint_check(email_to_check):
     config_list = load_json("loads.json")
     
-    # Próbáljuk meg betölteni a sütiket, ha létezik a fájl, különben üres dict
     try:
         all_cookies = load_json("cookies.json")
     except Exception:
@@ -34,7 +33,6 @@ def run_osint_check(email_to_check):
         for cookie_name, cookie_value in site_cookies.items():
             session.cookies.set(cookie_name, cookie_value, domain="www.gyakorikerdesek.hu")
 
-        # Előzetes GET kérés, hogy megkapjuk a munkamenet sütiket
         if "gyakorikerdesek" in name.lower() or "gyakorikerdesek.hu" in url:
             try:
                 session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
@@ -51,9 +49,9 @@ def run_osint_check(email_to_check):
 
         try:
             if method == "POST":
-                response = session.post(url, data=payload, headers=headers)
+                response = session.post(url, data=payload, headers=headers, allow_redirects=True)
             elif method == "GET":
-                response = session.get(url, params=payload, headers=headers)
+                response = session.get(url, params=payload, headers=headers, allow_redirects=True)
             else:
                 continue
 
@@ -61,17 +59,15 @@ def run_osint_check(email_to_check):
 
             # Eredmény elemzése a belepes.php válaszai alapján
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
-                print(f"[!] Nem sikerült a lekérdezés rate-limit / védelem miatt.")
+                print(f"[!] [{name}] Nem sikerült a lekérdezés rate-limit / védelem miatt.")
             elif "A megadott usernév/jelszó párosítás nem megfelelő" in response_text:
-                # Mivel rossz jelszmat adtunk meg direkt, de ezt a hibát kaptuk, 
-                # ez azt jelenti, hogy az e-mail cím LÉTEZIK a rendszerben!
                 print(f"[+] [{name}] A fiók LÉTEZIK (A megadott e-mail regisztrálva van).")
             else:
-                # Ha teljesen más üzenetet ad (vagy átirányít, mert sikeres lenne a dummy jelszóval - bár az esélytelen)
-                print(f"[-] [{name}] A fiók valószínűleg NEM létezik vagy ismeretlen válasz érkezett.")
+                print(f"[?] [{name}] Ismeretlen válasz. HTTP Státusz: {response.status_code}")
+                print(f"    Válasz szövege (részlet): {response.text[:300].strip().replace(chr(10), ' ')}")
 
-        except requests.exceptions.RequestException:
-            print(f"[!] Hálózati hiba történt a(z) {name} ellenőrzése közben.")
+        except requests.exceptions.RequestException as e:
+            print(f"[!] Hálózati hiba történt a(z) {name} ellenőrzése közben: {e}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
