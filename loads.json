@@ -2,12 +2,15 @@
   "targets": [
     {
       "name": "Gyakorikerdesek.hu",
-      "url": "https://www.gyakorikerdesek.hu/bejelentkezes",
+      "url": "https://www.gyakorikerdesek.hu/belepes.php",
       "method": "POST",
-      "email_field": "email",
-      "password_field": "password",
+      "email_field": "belepes_email",
+      "password_field": "belepes_jelszo",
       "dummy_password": "WrongPassword123!_SecureDummy",
-      "exists_keyword": "Helytelen",
+      "extra_fields": {
+        "oldal": "https://www.gyakorikerdesek.hu/"
+      },
+      "exists_keyword": "A megadott usernév/jelszó párosítás nem megfelelő",
       "not_exists_keyword": "nem található"
     }
   ]
