@@ -1,7 +1,7 @@
 [
   {
     "name": "Gyakorikerdesek",
-    "url": "https://www.gyakorikerdesek.hu/belepes.php",
+    "url": "https://www.gyakorikerdesek.hu/belepes",
     "method": "POST",
     "data": {
       "belepes_email": "{email}",
