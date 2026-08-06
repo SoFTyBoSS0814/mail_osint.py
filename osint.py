@@ -12,8 +12,13 @@ def load_json(file_path):
 
 def run_osint_check(email_to_check):
     config_list = load_json("loads.json")
-    all_cookies = load_json("cookies.json")
     
+    # Próbáljuk meg betölteni a sütiket, ha létezik a fájl, különben üres dict
+    try:
+        all_cookies = load_json("cookies.json")
+    except Exception:
+        all_cookies = {}
+        
     session = requests.Session()
 
     for item in config_list:
@@ -29,6 +34,7 @@ def run_osint_check(email_to_check):
         for cookie_name, cookie_value in site_cookies.items():
             session.cookies.set(cookie_name, cookie_value, domain="www.gyakorikerdesek.hu")
 
+        # Előzetes GET kérés, hogy megkapjuk a munkamenet sütiket
         if "gyakorikerdesek" in name.lower() or "gyakorikerdesek.hu" in url:
             try:
                 session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
@@ -53,13 +59,16 @@ def run_osint_check(email_to_check):
 
             response_text = response.text
 
-            # Ellenőrzés: Rate-limit vagy blokkolás szűrése a kért hibaüzenettel
+            # Eredmény elemzése a belepes.php válaszai alapján
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
-                print(f"[!] Nem sikerült a lekérdezés rate-limit miatt, próbáld újra később")
-            elif "nem tartozik regisztráció" in response_text:
-                print(f"[-] [{name}] A fiók NEM létezik (Nincs regisztráció ezzel a címmel).")
+                print(f"[!] Nem sikerült a lekérdezés rate-limit / védelem miatt.")
+            elif "A megadott usernév/jelszó párosítás nem megfelelő" in response_text:
+                # Mivel rossz jelszmat adtunk meg direkt, de ezt a hibát kaptuk, 
+                # ez azt jelenti, hogy az e-mail cím LÉTEZIK a rendszerben!
+                print(f"[+] [{name}] A fiók LÉTEZIK (A megadott e-mail regisztrálva van).")
             else:
-                print(f"[+] [{name}] A fiók LÉTEZIK (vagy érvényes regisztrált e-mail cím).")
+                # Ha teljesen más üzenetet ad (vagy átirányít, mert sikeres lenne a dummy jelszóval - bár az esélytelen)
+                print(f"[-] [{name}] A fiók valószínűleg NEM létezik vagy ismeretlen válasz érkezett.")
 
         except requests.exceptions.RequestException:
             print(f"[!] Hálózati hiba történt a(z) {name} ellenőrzése közben.")
@@ -68,6 +77,6 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Használat: python3 osint.py <email_cim>")
         sys.exit(1)
-    
+      
     target_email = sys.argv[1].strip()
     run_osint_check(target_email)
