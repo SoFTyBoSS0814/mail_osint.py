@@ -1,16 +1,17 @@
 {
   "targets": [
     {
-      "name": "Gyakorikerdesek.hu",
-      "url": "https://www.gyakorikerdesek.hu/belepes.php",
+      "name": "Chat.hu",
+      "url": "https://chat.hu/authentication/default/login?exit=0",
       "method": "POST",
-      "email_field": "belepes_email",
-      "password_field": "belepes_jelszo",
+      "email_field": "LoginForm[username]",
+      "password_field": "LoginForm[password]",
       "dummy_password": "WrongPassword123!_SecureDummy",
       "extra_fields": {
-        "oldal": "https://www.gyakorikerdesek.hu/"
+        "LoginForm[rememberMe]": "1",
+        "redirect_url": "/"
       },
-      "exists_keyword": "A megadott usernév/jelszó párosítás nem megfelelő",
+      "exists_keyword": "hibás",
       "not_exists_keyword": "nem található"
     }
   ]
