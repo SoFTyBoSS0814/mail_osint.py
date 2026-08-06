@@ -64,7 +64,10 @@ def run_osint_check(email_to_check):
             elif "A megadott usernév/jelszó párosítás nem megfelelő" in response_text:
                 print(f"[+] [{name}] A fiók LÉTEZIK (A megadott e-mail regisztrálva van).")
             else:
-                print(f"[-] [{name}] A fiók NEM létezik vagy ismeretlen válasz érkezett. HTTP Státusz: {response.status_code}")
+                print(f"[-] [{name}] Ismeretlen válasz (HTTP {response.status_code}). A szerver ezt válaszolta:")
+                for line in response_text.splitlines():
+                    if "hiba" in line.lower() or "nem" in line.lower() or "megadott" in line.lower():
+                        print(f"    -> {line.strip()}")
 
         except requests.exceptions.RequestException as e:
             print(f"[!] Hálózati hiba történt a(z) {name} ellenőrzése közben: {e}")
