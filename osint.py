@@ -15,22 +15,26 @@ def load_config(config_path="loads.json"):
 
 def check_email_login(target, email):
     """
-    Bejelentkezési kísérletet szimulál egy hamis jelszóval, 
-    hogy e-mail küldés nélkül határozza meg a fiók létezését.
+    Bejelentkezési kísérletet szimulál a pontos mezőkkel és extra adatokkal.
     """
     url = target.get("url")
     method = target.get("method", "POST").upper()
     
-    # Adatok összeállítása
+    # Alap adatok összeállítása a konfiguráció alapján
     payload = {
         target.get("email_field", "email"): email,
         target.get("password_field", "password"): target.get("dummy_password", "DummyPass123")
     }
     
-    # Alapvető böngészős fejlécek a blokkolások elkerülésére
+    # Ha vannak extra mezők (pl. oldal = ...), hozzáadjuk a payloadhoz
+    extra_fields = target.get("extra_fields", {})
+    if isinstance(extra_fields, dict):
+        payload.update(extra_fields)
+    
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept-Language": "hu-HU,hu;q=0.9,en;q=0.8"
+        "Accept-Language": "hu-HU,hu;q=0.9,en;q=0.8",
+        "Referer": "https://www.gyakorikerdesek.hu/belepes"
     }
 
     try:
@@ -43,11 +47,10 @@ def check_email_login(target, email):
         exists_kw = target.get("exists_keyword", "")
         not_exists_kw = target.get("not_exists_keyword", "")
         
-        # Válasz elemzése kulcsszavak alapján
         if exists_kw and exists_kw in body:
-            return {"status": "EXISTS", "details": f"A fiók létezik (Kulcsszó találat: '{exists_kw}')"}
+            return {"status": "EXISTS", "details": f"A fiók létezik (Találat: '{exists_kw}')"}
         elif not_exists_kw and not_exists_kw in body:
-            return {"status": "NOT_EXISTS", "details": f"A fiók nem létezik (Kulcsszó találat: '{not_exists_kw}')"}
+            return {"status": "NOT_EXISTS", "details": f"A fiók nem létezik (Találat: '{not_exists_kw}')"}
         else:
             return {"status": "UNKNOWN", "details": f"Nem egyértelmű válasz. HTTP Státusz: {response.status_code}"}
             
@@ -69,7 +72,6 @@ def main():
         print(f"[*] Célpont vizsgálata: {target.get('name', 'Ismeretlen')}...")
         result = check_email_login(target, email_to_check)
         
-        # Eredmény színezett/kifejezett kiírása
         status = result['status']
         if status == "EXISTS":
             print(f"    [+] EREDMÉNY: LÉTEZIK -> {result['details']}")
