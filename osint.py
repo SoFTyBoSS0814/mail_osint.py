@@ -33,6 +33,7 @@ def run_osint_check(email_to_check):
         for cookie_name, cookie_value in site_cookies.items():
             session.cookies.set(cookie_name, cookie_value, domain="www.gyakorikerdesek.hu")
 
+        # Előzetes GET kérés a munkamenet sütik és tokenek megszerzéséhez
         if "gyakorikerdesek" in name.lower() or "gyakorikerdesek.hu" in url:
             try:
                 session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
@@ -57,14 +58,13 @@ def run_osint_check(email_to_check):
 
             response_text = response.text
 
-            # Eredmény elemzése a belepes.php válaszai alapján
+            # Eredmény elemzése a belepes oldali válaszok alapján
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] [{name}] Nem sikerült a lekérdezés rate-limit / védelem miatt.")
             elif "A megadott usernév/jelszó párosítás nem megfelelő" in response_text:
                 print(f"[+] [{name}] A fiók LÉTEZIK (A megadott e-mail regisztrálva van).")
             else:
-                print(f"[?] [{name}] Ismeretlen válasz. HTTP Státusz: {response.status_code}")
-                print(f"    Válasz szövege (részlet): {response.text[:300].strip().replace(chr(10), ' ')}")
+                print(f"[-] [{name}] A fiók NEM létezik vagy ismeretlen válasz érkezett. HTTP Státusz: {response.status_code}")
 
         except requests.exceptions.RequestException as e:
             print(f"[!] Hálózati hiba történt a(z) {name} ellenőrzése közben: {e}")
