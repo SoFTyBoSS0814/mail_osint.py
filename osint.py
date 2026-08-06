@@ -1,75 +1,73 @@
 import json
-import os
+import sys
 import requests
 
-def load_configurations():
-    """Beolvassa a loads.json és cookies.json fájtokat."""
-    loads = {}
-    cookies = {}
-    
-    if os.path.exists("loads.json"):
-        with open("loads.json", "r", encoding="utf-8") as f:
-            try:
-                loads = json.load(f)
-            except Exception as e:
-                print(f"Hiba a loads.json beolvasásakor: {e}")
-                
-    if os.path.exists("cookies.json"):
-        with open("cookies.json", "r", encoding="utf-8") as f:
-            try:
-                cookies = json.load(f)
-            except Exception as e:
-                print(f"Hiba a cookies.json beolvasásakor: {e}")
-                
-    return loads, cookies
-
-def check_gyakorikerdesek(email: str, config: dict, cookies: dict) -> str:
-    """
-    Gyakorikerdesek.hu ellenőrzése hagyományos requests alapon.
-    """
-    url = config.get("url")
-    if not url:
-        return "[hiba] Hiányzik az URL a loads.json-ból!"
-        
-    method = config.get("method", "POST").upper()
-    
-    # Cookie-k átalakítása szótárrá, függetlenül attól, hogy listaként vagy szótárként vannak tárolva
-    if isinstance(cookies, list):
-        cookie_dict = {c.get('name'): c.get('value') for c in cookies if 'name' in c and 'value' in c}
-    else:
-        cookie_dict = cookies
-    
-    data = config.get("data", {}).copy()
-    for key, value in data.items():
-        if value == "{email}":
-            data[key] = email
-
+def load_json(file_path):
     try:
-        if method == "POST":
-            response = requests.post(url, data=data, cookies=cookie_dict, timeout=10)
-        else:
-            response = requests.get(url, params=data, cookies=cookie_dict, timeout=10)
-            
-        if response.status_code == 200:
-            return f"[válasz érkezett] Státusz: 200 OK | Tartalom hossza: {len(response.text)} karakter"
-        else:
-            return f"[hiba] Státusz kód: {response.status_code}"
-            
-    except Exception as e:
-        return f"[hiba] {str(e)}"
+        with open(file_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"[!] Hiba: A(z) {file_path} fájl nem található.")
+        sys.exit(1)
 
-def main():
-    loads, cookies = load_configurations()
-    target_email = loads.get("target_email", "teszt@pelda.hu")
+def run_osint_check(email_to_check):
+    config_list = load_json("loads.json")
+    all_cookies = load_json("cookies.json")
     
-    print(f"Cél e-mail ellenőrzése: {target_email}\n" + "---" * 20)
+    session = requests.Session()
 
-    # Konfiguráció kinyerése a loads.json-ból (kezelve azt is, ha külön blokkban vagy közvetlenül van)
-    gyk_config = loads.get("gyakorikerdesek", loads)
-    
-    print("[*] Gyakorikerdesek.hu ellenőrzése (Requests)...")
-    result = check_gyakorikerdesek(target_email, gyk_config, cookies)
-    print(f"Eredmény: {result}\n")
+    for item in config_list:
+        name = item.get("name")
+        url = item.get("url")
+        method = item.get("method", "POST").upper()
+        headers = item.get("headers", {})
+        
+        if "User-Agent" not in headers:
+            headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+        site_cookies = all_cookies.get(name, {})
+        for cookie_name, cookie_value in site_cookies.items():
+            session.cookies.set(cookie_name, cookie_value, domain="www.gyakorikerdesek.hu")
+
+        if "gyakorikerdesek" in name.lower() or "gyakorikerdesek.hu" in url:
+            try:
+                session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
+            except Exception:
+                pass
+
+        raw_data = item.get("data", {})
+        payload = {}
+        for key, value in raw_data.items():
+            if isinstance(value, str):
+                payload[key] = value.replace("{email}", email_to_check)
+            else:
+                payload[key] = value
+
+        try:
+            if method == "POST":
+                response = session.post(url, data=payload, headers=headers)
+            elif method == "GET":
+                response = session.get(url, params=payload, headers=headers)
+            else:
+                continue
+
+            response_text = response.text
+
+            # Ellenőrzés: Rate-limit vagy blokkolás szűrése a kért hibaüzenettel
+            if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
+                print(f"[!] Nem sikerült a lekérdezés, próbáld újra később")
+            elif "nem tartozik regisztráció" in response_text:
+                print(f"[-] [{name}] A fiók NEM létezik (Nincs regisztráció ezzel a címmel).")
+            else:
+                print(f"[+] [{name}] A fiók LÉTEZIK (vagy érvényes regisztrált e-mail cím).")
+
+        except requests.exceptions.RequestException:
+            print(f"[!] Hálózati hiba történt a(z) {name} ellenőrzése közben.")
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 2:
+        print("Használat: python3 osint.py <email_cim>")
+        sys.exit(1)
+    
+    target_email = sys.argv[1].strip()
+    run_osint_check(target_email)
