@@ -1,19 +1,18 @@
 [
   {
     "name": "Moly",
-    "url": "https://moly.hu/users",
-    "pre_get_url": "https://moly.hu/",
+    "url": "https://moly.hu/regisztracio",
+    "pre_get_url": "https://moly.hu/regisztracio",
     "method": "POST",
     "check_type": "keyword",
     "keyword": "már regisztráltak",
     "data": {
       "utf8": "✓",
       "authenticity_token": "",
-      "user[username]": "KereszturiTeszt99",
+      "user[username]": "TestUser9988",
       "user[email]": "{email}",
       "user[password]": "DummyPassword123!",
       "user[password_confirmation]": "DummyPassword123!",
-      "user[agreement]": "1",
       "commit": "Regisztráció"
     }
   }
