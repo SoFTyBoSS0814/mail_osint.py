@@ -1,16 +1,19 @@
 [
   {
     "name": "Moly",
-    "url": "https://moly.hu/jelszavak",
-    "pre_get_url": "https://moly.hu/jelszavak",
+    "url": "https://moly.hu/regisztracio",
+    "pre_get_url": "https://moly.hu/regisztracio",
     "method": "POST",
-    "check_type": "not_found_keyword",
-    "not_found_keyword": "Nincsen felhasználó ezzel az emailcímmel!",
+    "check_type": "keyword",
+    "keyword": "már regisztráltak",
     "data": {
       "utf8": "✓",
       "authenticity_token": "",
+      "user[name]": "TestUser9988",
       "user[email]": "{email}",
-      "commit": "Küldés"
+      "user[password]": "DummyPassword123!",
+      "user[password_confirmation]": "DummyPassword123!",
+      "commit": "Regisztráció"
     }
   }
 ]
