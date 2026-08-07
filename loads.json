@@ -1,7 +1,7 @@
 [
   {
     "name": "Moly",
-    "url": "https://moly.hu/regisztracio",
+    "url": "https://moly.hu/users",
     "pre_get_url": "https://moly.hu/regisztracio",
     "method": "POST",
     "check_type": "keyword",
