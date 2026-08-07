@@ -26,11 +26,11 @@ def run_osint_check(email_to_check):
         url = item.get("url")
         method = item.get("method", "POST").upper()
         headers = item.get("headers", {})
+        pre_get_url = item.get("pre_get_url") # Itt nézzük meg, hogy kell-e előzetes GET
         
         if "User-Agent" not in headers:
             headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-        # Dinamikus domain kinyerése az URL-ből a hardkódolás elkerülése érdekében
         parsed_url = urlparse(url)
         domain = parsed_url.hostname
 
@@ -38,9 +38,10 @@ def run_osint_check(email_to_check):
         for cookie_name, cookie_value in site_cookies.items():
             session.cookies.set(cookie_name, cookie_value, domain=domain)
 
-        if "gyakorikerdesek" in name.lower() or "gyakorikerdesek.hu" in url:
+        # Ha a JSON-ben meg van adva előzetes GET URL, akkor lefuttatjuk (nincs hardkódolás!)
+        if pre_get_url:
             try:
-                session.get("https://www.gyakorikerdesek.hu/belepes", headers=headers)
+                session.get(pre_get_url, headers=headers)
             except Exception:
                 pass
 
@@ -62,7 +63,6 @@ def run_osint_check(email_to_check):
 
             response_text = response.text
 
-            # Ellenőrzés: Rate-limit vagy blokkolás szűrése a kért hibaüzenettel
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] Nem sikerült a lekérdezés rate-limit miatt, próbáld újra később")
             elif "nem tartozik regisztráció" in response_text:
