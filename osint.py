@@ -44,6 +44,7 @@ def run_osint_check(email_to_check):
             extracted_tokens = {}
             if pre_get_url:
                 pre_resp = session.get(pre_get_url, headers=headers)
+                # Keresjük a hidden inputokat
                 for match in re.finditer(r'<input[^>]+type=["\']hidden["\'][^>]*>', pre_resp.text):
                     tag = match.group(0)
                     name_match = re.search(r'name=["\']([^"\']+)["\']', tag)
@@ -51,6 +52,11 @@ def run_osint_check(email_to_check):
                     if name_match:
                         val = val_match.group(1) if val_match else ""
                         extracted_tokens[name_match.group(1)] = val
+                
+                # Ha nem talált tokent inputban, próbáljuk meg a meta tagből is kiolvasni (Rails specifikus)
+                meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', pre_resp.text)
+                if meta_match and "authenticity_token" not in extracted_tokens:
+                    extracted_tokens["authenticity_token"] = meta_match.group(1)
 
             payload = {}
             for key, value in raw_data.items():
@@ -71,6 +77,11 @@ def run_osint_check(email_to_check):
                 response = session.get(url, params=payload, headers=headers)
 
             response_text = response.text
+
+            # DIAGNOSZTIKA: Írjuk ki a státuszt és a válasz elejét, hogy lássuk mit kapunk
+            print(f"[DEBUG] [{name}] HTTP Státusz: {response.status_code}")
+            print(f"[DEBUG] Válasz-szöveg részlet: {response_text[:300].strip()}")
+            print("-" * 50)
 
             # Ellenőrzési logika
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
