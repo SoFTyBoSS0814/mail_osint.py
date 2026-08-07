@@ -2,7 +2,7 @@ import json
 import sys
 import requests
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 def load_json(file_path):
     try:
@@ -22,29 +22,38 @@ def run_osint_check(email_to_check):
         
     for item in config_list:
         name = item.get("name")
-        url = item.get("url")
+        pre_get_url = item.get("pre_get_url")
+        fallback_url = item.get("url")
         method = item.get("method", "POST").upper()
         headers = item.get("headers", {})
-        pre_get_url = item.get("pre_get_url")
         check_type = item.get("check_type", "keyword")
         
         if "User-Agent" not in headers:
             headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-        parsed_url = urlparse(url)
-        domain = parsed_url.hostname
+        parsed_url = urlparse(pre_get_url)
+        domain = f"{parsed_url.scheme}://{parsed_url.netloc}"
         raw_data = item.get("data", {})
 
         try:
             session = requests.Session()
             site_cookies = all_cookies.get(name, {})
             for cookie_name, cookie_value in site_cookies.items():
-                session.cookies.set(cookie_name, cookie_value, domain=domain)
+                session.cookies.set(cookie_name, cookie_value, domain=parsed_url.hostname)
 
             extracted_tokens = {}
+            target_post_url = fallback_url
+
             if pre_get_url:
                 pre_resp = session.get(pre_get_url, headers=headers)
-                # Keresjük a hidden inputokat
+                
+                # 1. Automatikusan megkeressük a form action címét a HTML-ből
+                form_match = re.search(r'<form[^>]+action=["\']([^"\']+)["\']', pre_resp.text, re.IGNORECASE)
+                if form_match:
+                    action_path = form_match.group(1)
+                    target_post_url = urljoin(domain, action_path)
+
+                # 2. Hidden inputok kinyerése
                 for match in re.finditer(r'<input[^>]+type=["\']hidden["\'][^>]*>', pre_resp.text):
                     tag = match.group(0)
                     name_match = re.search(r'name=["\']([^"\']+)["\']', tag)
@@ -53,7 +62,7 @@ def run_osint_check(email_to_check):
                         val = val_match.group(1) if val_match else ""
                         extracted_tokens[name_match.group(1)] = val
                 
-                # Ha nem talált tokent inputban, próbáljuk meg a meta tagből is kiolvasni (Rails specifikus)
+                # Meta csrf token fallback
                 meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', pre_resp.text)
                 if meta_match and "authenticity_token" not in extracted_tokens:
                     extracted_tokens["authenticity_token"] = meta_match.group(1)
@@ -72,18 +81,14 @@ def run_osint_check(email_to_check):
                     payload[tk] = tv
 
             if method == "POST":
-                response = session.post(url, data=payload, headers=headers)
+                response = session.post(target_post_url, data=payload, headers=headers)
             else:
-                response = session.get(url, params=payload, headers=headers)
+                response = session.get(target_post_url, params=payload, headers=headers)
 
             response_text = response.text
 
-            # DIAGNOSZTIKA: Írjuk ki a státuszt és a válasz elejét, hogy lássuk mit kapunk
-            print(f"[DEBUG] [{name}] HTTP Státusz: {response.status_code}")
-            print(f"[DEBUG] Válasz-szöveg részlet: {response_text[:300].strip()}")
-            print("-" * 50)
+            print(f"[DEBUG] [{name}] Cél POST URL: {target_post_url} | HTTP Státusz: {response.status_code}")
 
-            # Ellenőrzési logika
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] [{name}] Rate-limit / túl sok kérés észlelve!")
             elif check_type == "keyword":
@@ -92,12 +97,6 @@ def run_osint_check(email_to_check):
                     print(f"[+] [{name}] A fiók LÉTEZIK (A kulcsszó megtalálható: '{keyword}').")
                 else:
                     print(f"[-] [{name}] A fiók NEM LÉTEZIK (A kulcsszó nem található).")
-            elif check_type == "not_found_keyword":
-                not_found_kw = item.get("not_found_keyword", "")
-                if not_found_kw and not_found_kw in response_text:
-                    print(f"[-] [{name}] A fiók NEM LÉTEZIK (A szerver szerint nincs ilyen e-mail).")
-                else:
-                    print(f"[+] [{name}] A fiók LÉTEZIK (A hibaüzenet nem jelentkezett).")
             else:
                 print(f"[?] [{name}] Ismeretlen check_type: {check_type}")
 
