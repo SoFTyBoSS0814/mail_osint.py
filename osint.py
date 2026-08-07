@@ -2,7 +2,7 @@ import json
 import sys
 import requests
 import re
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse
 
 def load_json(file_path):
     try:
@@ -23,7 +23,7 @@ def run_osint_check(email_to_check):
     for item in config_list:
         name = item.get("name")
         pre_get_url = item.get("pre_get_url")
-        fallback_url = item.get("url")
+        target_post_url = item.get("url") # A JSON-ben megadott fix POST cím használata
         method = item.get("method", "POST").upper()
         headers = item.get("headers", {})
         check_type = item.get("check_type", "keyword")
@@ -32,28 +32,21 @@ def run_osint_check(email_to_check):
             headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
         parsed_url = urlparse(pre_get_url)
-        domain = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        domain = parsed_url.hostname
         raw_data = item.get("data", {})
 
         try:
             session = requests.Session()
             site_cookies = all_cookies.get(name, {})
             for cookie_name, cookie_value in site_cookies.items():
-                session.cookies.set(cookie_name, cookie_value, domain=parsed_url.hostname)
+                session.cookies.set(cookie_name, cookie_value, domain=domain)
 
             extracted_tokens = {}
-            target_post_url = fallback_url
 
             if pre_get_url:
                 pre_resp = session.get(pre_get_url, headers=headers)
                 
-                # 1. Automatikusan megkeressük a form action címét a HTML-ből
-                form_match = re.search(r'<form[^>]+action=["\']([^"\']+)["\']', pre_resp.text, re.IGNORECASE)
-                if form_match:
-                    action_path = form_match.group(1)
-                    target_post_url = urljoin(domain, action_path)
-
-                # 2. Hidden inputok kinyerése
+                # Rejtett mezők (authenticity_token) kinyerése
                 for match in re.finditer(r'<input[^>]+type=["\']hidden["\'][^>]*>', pre_resp.text):
                     tag = match.group(0)
                     name_match = re.search(r'name=["\']([^"\']+)["\']', tag)
