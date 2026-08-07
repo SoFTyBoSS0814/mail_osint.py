@@ -1,15 +1,16 @@
 [
-    {
+  {
     "name": "Moly",
-    "url": "https://moly.hu/azonositas",
-    "pre_get_url": "https://moly.hu/azonositas",
+    "url": "https://moly.hu/jelszavak",
+    "pre_get_url": "https://moly.hu/jelszavak",
     "method": "POST",
+    "check_type": "not_found_keyword",
+    "not_found_keyword": "Nincsen felhasználó ezzel az emailcímmel!",
     "data": {
       "utf8": "✓",
       "authenticity_token": "",
-      "user_session[email]": "{email}",
-      "user_session[password]": "DummyPassword123!",
-      "commit": "Belépés"
+      "user[email]": "{email}",
+      "commit": "Küldés"
     }
   }
 ]
