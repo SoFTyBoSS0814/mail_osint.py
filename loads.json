@@ -14,5 +14,18 @@
             "status": 200,
             "contains": "nem tartozik regisztráció"
         }
+    },
+    {
+    "name": "Moly",
+    "url": "https://moly.hu/azonositas",
+    "pre_get_url": "https://moly.hu/azonositas",
+    "method": "POST",
+    "data": {
+      "utf8": "✓",
+      "authenticity_token": "",
+      "user_session[email]": "{email}",
+      "user_session[password]": "DummyPassword123!",
+      "commit": "Belépés"
     }
+  }
 ]
