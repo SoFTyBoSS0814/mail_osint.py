@@ -9,10 +9,11 @@
     "data": {
       "utf8": "✓",
       "authenticity_token": "",
-      "user[name]": "TestUser9988",
+      "user[username]": "KereszturiTeszt99",
       "user[email]": "{email}",
       "user[password]": "DummyPassword123!",
       "user[password_confirmation]": "DummyPassword123!",
+      "user[agreement]": "1",
       "commit": "Regisztráció"
     }
   }
