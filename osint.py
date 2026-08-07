@@ -26,7 +26,7 @@ def run_osint_check(email_to_check):
         method = item.get("method", "POST").upper()
         headers = item.get("headers", {})
         pre_get_url = item.get("pre_get_url")
-        check_type = item.get("check_type", "not_found_keyword")
+        check_type = item.get("check_type", "keyword")
         
         if "User-Agent" not in headers:
             headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -36,7 +36,6 @@ def run_osint_check(email_to_check):
         raw_data = item.get("data", {})
 
         try:
-            # Session indítása és a friss token letöltése az űrlapról
             session = requests.Session()
             site_cookies = all_cookies.get(name, {})
             for cookie_name, cookie_value in site_cookies.items():
@@ -76,6 +75,12 @@ def run_osint_check(email_to_check):
             # Ellenőrzési logika
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] [{name}] Rate-limit / túl sok kérés észlelve!")
+            elif check_type == "keyword":
+                keyword = item.get("keyword", "")
+                if keyword and keyword in response_text:
+                    print(f"[+] [{name}] A fiók LÉTEZIK (A kulcsszó megtalálható: '{keyword}').")
+                else:
+                    print(f"[-] [{name}] A fiók NEM LÉTEZIK (A kulcsszó nem található).")
             elif check_type == "not_found_keyword":
                 not_found_kw = item.get("not_found_keyword", "")
                 if not_found_kw and not_found_kw in response_text:
@@ -83,7 +88,7 @@ def run_osint_check(email_to_check):
                 else:
                     print(f"[+] [{name}] A fiók LÉTEZIK (A hibaüzenet nem jelentkezett).")
             else:
-                print(f"[?] [{name}] Ismeretlen check_type.")
+                print(f"[?] [{name}] Ismeretlen check_type: {check_type}")
 
         except requests.exceptions.RequestException:
             print(f"[!] Hálózati hiba történt a(z) {name} ellenőrzése közben.")
