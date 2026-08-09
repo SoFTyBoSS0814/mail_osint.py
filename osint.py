@@ -3,6 +3,7 @@ import sys
 import requests
 import re
 import random
+import time
 from urllib.parse import urlparse, urljoin
 
 def load_json(file_path):
@@ -22,6 +23,10 @@ def run_osint_check(email_to_check):
         all_cookies = {}
         
     for item in config_list:
+        # Véletlenszerű késleltetés a rate limit elkerülése érdekében (2.5 - 5 másodperc)
+        delay = random.uniform(2.5, 5.0)
+        time.sleep(delay)
+
         name = item.get("name")
         pre_get_url = item.get("pre_get_url")
         fallback_url = item.get("url")
@@ -48,7 +53,6 @@ def run_osint_check(email_to_check):
             for cookie_name, cookie_value in site_cookies.items():
                 session.cookies.set(cookie_name, cookie_value, domain=parsed_url.hostname)
 
-            # Cookie elfogadás automatikus beállítása Gyakorikerdesek esetén ("cookieok" néven)
             if name == "Gyakorikerdesek":
                 session.cookies.set("cookieok", "1", domain="www.gyakorikerdesek.hu")
 
@@ -61,7 +65,7 @@ def run_osint_check(email_to_check):
                 
                 forms = re.findall(r'(<form.*?</form>)', pre_resp.text, re.DOTALL | re.IGNORECASE)
                 for form_html in forms:
-                    if 'user[email]' in form_html or 'user[login]' in form_html or 'belepes_email' in form_html:
+                    if 'user[email]' in form_html or 'user[login]' in form_html or 'email' in form_html:
                         action_match = re.search(r'action=["\']([^"\']+)["\']', form_html, re.IGNORECASE)
                         if action_match:
                             action_path = action_match.group(1)
@@ -117,9 +121,9 @@ def run_osint_check(email_to_check):
             elif check_type == "keyword":
                 keyword = item.get("keyword", "")
                 if keyword and keyword in response_text:
-                    print(f"[+] [{name}] A fiók LÉTEZIK (A kulcsszó megtalálható: '{keyword}').")
+                    print(f"[+] [{name}] A kulcsszó megtalálható: '{keyword}'.")
                 else:
-                    print(f"[-] [{name}] A fiók NEM LÉTEZIK (A kulcsszó nem található).")
+                    print(f"[-] [{name}] A kulcsszó nem található.")
             else:
                 print(f"[?] [{name}] Ismeretlen check_type: {check_type}")
 
