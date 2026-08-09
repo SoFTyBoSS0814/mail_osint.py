@@ -61,7 +61,6 @@ def run_osint_check(email_to_check):
                         action_match = re.search(r'action=["\']([^"\']+)["\']', form_html, re.IGNORECASE)
                         if action_match:
                             action_path = action_match.group(1)
-                            # Gyakorikerdesek esetén ne írjuk felül a JSON-ben megadott AJAX URL-t!
                             if name != "Gyakorikerdesek":
                                 target_post_url = urljoin(domain, action_path)
                             break
@@ -101,11 +100,13 @@ def run_osint_check(email_to_check):
                 headers[hk] = hv
 
             if method == "POST":
-                response = session.post(target_post_url, data=payload, headers=headers)
+                response = session.post(target_post_url, data=payload, headers=headers, allow_redirects=False)
             else:
-                response = session.get(target_post_url, params=payload, headers=headers)
+                response = session.get(target_post_url, params=payload, headers=headers, allow_redirects=False)
 
             response_text = response.text
+
+            print(f"[DEBUG VÁLASZ] [{name}] Status: {response.status_code} | Text: {response_text[:300]}")
 
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] [{name}] Rate-limit / túl sok kérés észlelve!")
