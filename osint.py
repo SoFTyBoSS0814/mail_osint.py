@@ -45,21 +45,20 @@ def run_osint_check(email_to_check):
             target_post_url = fallback_url
 
             if pre_get_url:
-                # Beállítjuk a Referer-t a pre-get-hez is
                 headers["Referer"] = pre_get_url
                 pre_resp = session.get(pre_get_url, headers=headers)
                 
-                # 1. Okos form keresés a helyes POST URL-hez
+                # OKOS FORM KERESÉS: Megkeressük a regisztrációs űrlapot és annak az action címét
                 forms = re.findall(r'(<form.*?</form>)', pre_resp.text, re.DOTALL | re.IGNORECASE)
                 for form_html in forms:
-                    if 'user[email]' in form_html:
+                    if 'user[email]' in form_html or 'user[login]' in form_html:
                         action_match = re.search(r'action=["\']([^"\']+)["\']', form_html, re.IGNORECASE)
                         if action_match:
                             action_path = action_match.group(1)
                             target_post_url = urljoin(domain, action_path)
                             break
 
-                # 2. BIZTOS AUTHENTICITY TOKEN KINYERÉS (függetlenül az attribútumok sorrendjétől)
+                # Token kinyerése
                 token_match = re.search(r'name=["\']authenticity_token["\'][^>]*value=["\']([^"\']+)["\']', pre_resp.text, re.IGNORECASE)
                 if not token_match:
                     token_match = re.search(r'value=["\']([^"\']+)["\'][^>]*name=["\']authenticity_token["\']', pre_resp.text, re.IGNORECASE)
@@ -67,14 +66,13 @@ def run_osint_check(email_to_check):
                 if token_match:
                     extracted_tokens["authenticity_token"] = token_match.group(1)
                 
-                # Meta csrf token fallback
                 meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', pre_resp.text)
                 if meta_match and "authenticity_token" not in extracted_tokens:
                     extracted_tokens["authenticity_token"] = meta_match.group(1)
 
                 print(f"[DEBUG] Kinyert tokenek: {extracted_tokens}")
+                print(f"[DEBUG] Automatikusan kinyert POST URL: {target_post_url}")
 
-            # Frissítjük a fejlécet a POST-hoz
             headers["Referer"] = pre_get_url
 
             payload = {}
@@ -97,7 +95,7 @@ def run_osint_check(email_to_check):
 
             response_text = response.text
 
-            print(f"[DEBUG] [{name}] Cél POST URL: {target_post_url} | HTTP Státusz: {response.status_code}")
+            print(f"[DEBUG] [{name}] Végleges POST URL: {target_post_url} | HTTP Státusz: {response.status_code}")
 
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] [{name}] Rate-limit / túl sok kérés észlelve!")
