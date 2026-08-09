@@ -48,10 +48,9 @@ def run_osint_check(email_to_check):
             for cookie_name, cookie_value in site_cookies.items():
                 session.cookies.set(cookie_name, cookie_value, domain=parsed_url.hostname)
 
-            # Cookie elfogadás automatikus beállítása Gyakorikerdesek esetén
+            # Cookie elfogadás automatikus beállítása Gyakorikerdesek esetén ("cookieok" néven)
             if name == "Gyakorikerdesek":
-                session.cookies.set("sutik", "1", domain="www.gyakorikerdesek.hu")
-                session.cookies.set("cookie_consent", "1", domain="www.gyakorikerdesek.hu")
+                session.cookies.set("cookieok", "1", domain="www.gyakorikerdesek.hu")
 
             extracted_tokens = {}
             target_post_url = fallback_url
@@ -60,7 +59,7 @@ def run_osint_check(email_to_check):
                 headers["Referer"] = pre_get_url
                 pre_resp = session.get(pre_get_url, headers=headers)
                 
-                forms = re.findall(r'(<form.*kurat?</form>)', pre_resp.text, re.DOTALL | re.IGNORECASE)
+                forms = re.findall(r'(<form.*?</form>)', pre_resp.text, re.DOTALL | re.IGNORECASE)
                 for form_html in forms:
                     if 'user[email]' in form_html or 'user[login]' in form_html or 'belepes_email' in form_html:
                         action_match = re.search(r'action=["\']([^"\']+)["\']', form_html, re.IGNORECASE)
