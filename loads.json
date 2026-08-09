@@ -1,27 +1,20 @@
 [
   {
-    "name": "Gyakorikerdesek",
-    "url": "https://www.gyakorikerdesek.hu/jquery/regisztracio.php",
-    "pre_get_url": "https://www.gyakorikerdesek.hu/belepes",
+    "name": "Facebook",
+    "url": "https://www.facebook.com/login/identify/?ctx=recover&search_source=search_history",
+    "pre_get_url": "https://www.facebook.com/login/identify/",
     "method": "POST",
     "check_type": "keyword",
-    "keyword": "Ezzel az e-mail címmel már regisztráltál korábban",
+    "keyword": "A keresett feltételnek megfelelő fiók nem található",
     "headers": {
       "Content-Type": "application/x-www-form-urlencoded",
-      "X-Requested-With": "XMLHttpRequest",
-      "Origin": "https://www.gyakorikerdesek.hu",
-      "Referer": "https://www.gyakorikerdesek.hu/belepes",
+      "Origin": "https://www.facebook.com",
+      "Referer": "https://www.facebook.com/login/identify/",
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     },
     "data": {
-      "nev": "user_{random}",
       "email": "{email}",
-      "jelszo_1": "DummyPassword123!",
-      "jelszo_2": "DummyPassword123!",
-      "publikus_nev": "0",
-      "adatvedelem_0": "1",
-      "elmult16_0": "1",
-      "hirlevel_0": "1"
+      "did_submit": "Search"
     }
   }
 ]
