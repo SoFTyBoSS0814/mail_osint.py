@@ -17,20 +17,37 @@
       "commit": "Regisztráció"
     }
   },
-    {
-        "name": "Gyakorikerdesek_PasswordReset",
-        "url": "https://www.gyakorikerdesek.hu/jquery/elfelejtett_jelszo.php",
-        "method": "POST",
-        "headers": {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "X-Requested-With": "XMLHttpRequest"
-        },
-        "data": {
-            "email": "{email}"
-        },
-        "rule": {
-            "status": 200,
-            "contains": "nem tartozik regisztráció"
-        }
+[
+  {
+    "name": "Moly",
+    "url": "https://moly.hu/tagok",
+    "pre_get_url": "https://moly.hu/regisztracio",
+    "method": "POST",
+    "check_type": "keyword",
+    "keyword": "Már regisztráltak ezzel az emailcímmel",
+    "data": {
+      "utf8": "✓",
+      "authenticity_token": "",
+      "user[login]": "TestUser{random}",
+      "user[email]": "{email}",
+      "user[password]": "DummyPassword123!",
+      "user[password_confirmation]": "DummyPassword123!",
+      "user[accepted_terms]": "1",
+      "commit": "Regisztráció"
     }
+  },
+  {
+    "name": "Gyakorikerdesek",
+    "url": "https://www.gyakorikerdesek.hu/jquery/elfelejtett_jelszo.php",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-Requested-With": "XMLHttpRequest"
+    },
+    "data": {
+      "email": "{email}"
+    },
+    "check_type": "keyword",
+    "keyword": "nem tartozik regisztráció"
+  }
 ]
