@@ -1,6 +1,6 @@
 [
   {
-    "name": "Moly",
+    "name": "Moly.hu",
     "url": "https://moly.hu/tagok",
     "pre_get_url": "https://moly.hu/regisztracio",
     "method": "POST",
