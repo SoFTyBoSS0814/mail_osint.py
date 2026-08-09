@@ -17,7 +17,6 @@
       "commit": "Regisztráció"
     }
   },
-  [
     {
         "name": "Gyakorikerdesek_PasswordReset",
         "url": "https://www.gyakorikerdesek.hu/jquery/elfelejtett_jelszo.php",
@@ -34,5 +33,4 @@
             "contains": "nem tartozik regisztráció"
         }
     }
-]
 ]
