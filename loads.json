@@ -1,5 +1,6 @@
 [
-"name": "Gyakorikerdesek",
+{
+    "name": "Gyakorikerdesek",
     "url": "https://www.gyakorikerdesek.hu/jquery/belepes.php",
     "pre_get_url": "https://www.gyakorikerdesek.hu/belepes",
     "method": "POST",
