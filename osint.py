@@ -25,11 +25,18 @@ def run_osint_check(email_to_check):
         pre_get_url = item.get("pre_get_url")
         fallback_url = item.get("url")
         method = item.get("method", "POST").upper()
-        headers = item.get("headers", {})
         check_type = item.get("check_type", "keyword")
         
-        if "User-Agent" not in headers:
-            headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        # Teljes körű modern böngészős fejlécek
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "hu-HU,hu;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Origin": "https://moly.hu",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Dest": "document",
+        }
 
         parsed_url = urlparse(pre_get_url)
         domain = f"{parsed_url.scheme}://{parsed_url.netloc}"
@@ -48,7 +55,7 @@ def run_osint_check(email_to_check):
                 headers["Referer"] = pre_get_url
                 pre_resp = session.get(pre_get_url, headers=headers)
                 
-                # OKOS FORM KERESÉS: Megkeressük a regisztrációs űrlapot és annak az action címét
+                # Okos form keresés a helyes POST URL-hez
                 forms = re.findall(r'(<form.*?</form>)', pre_resp.text, re.DOTALL | re.IGNORECASE)
                 for form_html in forms:
                     if 'user[email]' in form_html or 'user[login]' in form_html:
@@ -69,9 +76,6 @@ def run_osint_check(email_to_check):
                 meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', pre_resp.text)
                 if meta_match and "authenticity_token" not in extracted_tokens:
                     extracted_tokens["authenticity_token"] = meta_match.group(1)
-
-                print(f"[DEBUG] Kinyert tokenek: {extracted_tokens}")
-                print(f"[DEBUG] Automatikusan kinyert POST URL: {target_post_url}")
 
             headers["Referer"] = pre_get_url
 
@@ -96,6 +100,9 @@ def run_osint_check(email_to_check):
             response_text = response.text
 
             print(f"[DEBUG] [{name}] Végleges POST URL: {target_post_url} | HTTP Státusz: {response.status_code}")
+            
+            if response.status_code == 500:
+                print(f"[DEBUG] Szerverhiba válasz részlet: {response_text[:300]}")
 
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] [{name}] Rate-limit / túl sok kérés észlelve!")
