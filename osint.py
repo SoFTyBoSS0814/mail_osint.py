@@ -61,7 +61,9 @@ def run_osint_check(email_to_check):
                         action_match = re.search(r'action=["\']([^"\']+)["\']', form_html, re.IGNORECASE)
                         if action_match:
                             action_path = action_match.group(1)
-                            target_post_url = urljoin(domain, action_path)
+                            # Gyakorikerdesek esetén ne írjuk felül a JSON-ben megadott AJAX URL-t!
+                            if name != "Gyakorikerdesek":
+                                target_post_url = urljoin(domain, action_path)
                             break
 
                 token_match = re.search(r'name=["\']authenticity_token["\'][^>]*value=["\']([^"\']+)["\']', pre_resp.text, re.IGNORECASE)
@@ -104,9 +106,6 @@ def run_osint_check(email_to_check):
                 response = session.get(target_post_url, params=payload, headers=headers)
 
             response_text = response.text
-
-            # DEBUG KIÍRÁS A VÁLASZRÓL
-            print(f"[DEBUG VÁLASZ] [{name}] {response_text[:300]}")
 
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] [{name}] Rate-limit / túl sok kérés észlelve!")
