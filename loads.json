@@ -5,7 +5,7 @@
     "pre_get_url": "https://moly.hu/regisztracio",
     "method": "POST",
     "check_type": "keyword",
-    "keyword": "már regisztráltak",
+    "keyword": "Már regisztráltak ezzel az emailcímmel.",
     "data": {
       "utf8": "✓",
       "authenticity_token": "",
