@@ -2,7 +2,7 @@ import json
 import sys
 import requests
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 def load_json(file_path):
     try:
@@ -23,7 +23,7 @@ def run_osint_check(email_to_check):
     for item in config_list:
         name = item.get("name")
         pre_get_url = item.get("pre_get_url")
-        target_post_url = item.get("url") # A JSON-ben megadott fix POST cím használata
+        fallback_url = item.get("url")
         method = item.get("method", "POST").upper()
         headers = item.get("headers", {})
         check_type = item.get("check_type", "keyword")
@@ -32,33 +32,50 @@ def run_osint_check(email_to_check):
             headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
         parsed_url = urlparse(pre_get_url)
-        domain = parsed_url.hostname
+        domain = f"{parsed_url.scheme}://{parsed_url.netloc}"
         raw_data = item.get("data", {})
 
         try:
             session = requests.Session()
             site_cookies = all_cookies.get(name, {})
             for cookie_name, cookie_value in site_cookies.items():
-                session.cookies.set(cookie_name, cookie_value, domain=domain)
+                session.cookies.set(cookie_name, cookie_value, domain=parsed_url.hostname)
 
             extracted_tokens = {}
+            target_post_url = fallback_url
 
             if pre_get_url:
+                # Beállítjuk a Referer-t a pre-get-hez is
+                headers["Referer"] = pre_get_url
                 pre_resp = session.get(pre_get_url, headers=headers)
                 
-                # Rejtett mezők (authenticity_token) kinyerése
-                for match in re.finditer(r'<input[^>]+type=["\']hidden["\'][^>]*>', pre_resp.text):
-                    tag = match.group(0)
-                    name_match = re.search(r'name=["\']([^"\']+)["\']', tag)
-                    val_match = re.search(r'value=["\']([^"\']*)["\']', tag)
-                    if name_match:
-                        val = val_match.group(1) if val_match else ""
-                        extracted_tokens[name_match.group(1)] = val
+                # 1. Okos form keresés a helyes POST URL-hez
+                forms = re.findall(r'(<form.*?</form>)', pre_resp.text, re.DOTALL | re.IGNORECASE)
+                for form_html in forms:
+                    if 'user[email]' in form_html:
+                        action_match = re.search(r'action=["\']([^"\']+)["\']', form_html, re.IGNORECASE)
+                        if action_match:
+                            action_path = action_match.group(1)
+                            target_post_url = urljoin(domain, action_path)
+                            break
+
+                # 2. BIZTOS AUTHENTICITY TOKEN KINYERÉS (függetlenül az attribútumok sorrendjétől)
+                token_match = re.search(r'name=["\']authenticity_token["\'][^>]*value=["\']([^"\']+)["\']', pre_resp.text, re.IGNORECASE)
+                if not token_match:
+                    token_match = re.search(r'value=["\']([^"\']+)["\'][^>]*name=["\']authenticity_token["\']', pre_resp.text, re.IGNORECASE)
+                
+                if token_match:
+                    extracted_tokens["authenticity_token"] = token_match.group(1)
                 
                 # Meta csrf token fallback
                 meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', pre_resp.text)
                 if meta_match and "authenticity_token" not in extracted_tokens:
                     extracted_tokens["authenticity_token"] = meta_match.group(1)
+
+                print(f"[DEBUG] Kinyert tokenek: {extracted_tokens}")
+
+            # Frissítjük a fejlécet a POST-hoz
+            headers["Referer"] = pre_get_url
 
             payload = {}
             for key, value in raw_data.items():
