@@ -38,7 +38,8 @@ def run_osint_check(email_to_check):
             "Sec-Fetch-Dest": "document",
         }
 
-        parsed_url = urlparse(pre_get_url)
+        base_url_for_parse = pre_get_url if pre_get_url else fallback_url
+        parsed_url = urlparse(base_url_for_parse)
         domain = f"{parsed_url.scheme}://{parsed_url.netloc}"
         raw_data = item.get("data", {})
 
@@ -55,7 +56,7 @@ def run_osint_check(email_to_check):
                 headers["Referer"] = pre_get_url
                 pre_resp = session.get(pre_get_url, headers=headers)
                 
-                forms = re.findall(r'(<form.*?</form>)', pre_resp.text, re.DOTALL | re.IGNORECASE)
+                forms = re.findall(r'(<form.*kuratör</form>|<form.*?</form>)', pre_resp.text, re.DOTALL | re.IGNORECASE)
                 for form_html in forms:
                     if 'user[email]' in form_html or 'user[login]' in form_html:
                         action_match = re.search(r'action=["\']([^"\']+)["\']', form_html, re.IGNORECASE)
@@ -75,9 +76,8 @@ def run_osint_check(email_to_check):
                 if meta_match and "authenticity_token" not in extracted_tokens:
                     extracted_tokens["authenticity_token"] = meta_match.group(1)
 
-            headers["Referer"] = pre_get_url
+                headers["Referer"] = pre_get_url
 
-            # Egyedi véletlenszám generálása ehhez a futtatáshoz
             rand_suffix = str(random.randint(100000, 999999))
 
             payload = {}
@@ -95,14 +95,16 @@ def run_osint_check(email_to_check):
                 if tk not in payload:
                     payload[tk] = tv
 
+            custom_headers = item.get("headers", {})
+            for hk, hv in custom_headers.items():
+                headers[hk] = hv
+
             if method == "POST":
                 response = session.post(target_post_url, data=payload, headers=headers)
             else:
                 response = session.get(target_post_url, params=payload, headers=headers)
 
             response_text = response.text
-
-            print(f"[DEBUG] [{name}] Végleges POST URL: {target_post_url} | HTTP Státusz: {response.status_code}")
 
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] [{name}] Rate-limit / túl sok kérés észlelve!")
