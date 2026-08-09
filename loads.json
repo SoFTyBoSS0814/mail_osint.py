@@ -1,7 +1,7 @@
 [
   {
     "name": "Moly",
-    "url": "https://moly.hu/regisztracio",
+    "url": "https://moly.hu/tagok",
     "pre_get_url": "https://moly.hu/regisztracio",
     "method": "POST",
     "check_type": "keyword",
@@ -9,7 +9,7 @@
     "data": {
       "utf8": "✓",
       "authenticity_token": "",
-      "user[login]": "TestUser9988",
+      "user[login]": "TestUser{random}",
       "user[email]": "{email}",
       "user[first_name]": "",
       "user[password]": "DummyPassword123!",
