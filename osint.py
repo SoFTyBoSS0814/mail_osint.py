@@ -23,7 +23,6 @@ def run_osint_check(email_to_check):
         all_cookies = {}
         
     for item in config_list:
-        # Véletlenszerű késleltetés a rate limit elkerülése érdekében (2.5 - 5 másodperc)
         delay = random.uniform(2.5, 5.0)
         time.sleep(delay)
 
@@ -114,7 +113,7 @@ def run_osint_check(email_to_check):
 
             response_text = response.text
 
-            print(f"[DEBUG VÁLASZ] [{name}] Status: {response.status_code} | Text: {response_text[:300]}")
+            print(f"[DEBUG VÁLASZ] [{name}] Status: {response.status_code} | Hossz: {len(response_text)} | Raw: {repr(response_text[:100])}")
 
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] [{name}] Rate-limit / túl sok kérés észlelve!")
