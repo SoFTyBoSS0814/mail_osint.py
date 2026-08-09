@@ -32,7 +32,6 @@ def run_osint_check(email_to_check):
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
             "Accept-Language": "hu-HU,hu;q=0.9,en-US;q=0.8,en;q=0.7",
-            "Origin": "https://moly.hu",
             "Sec-Fetch-Site": "same-origin",
             "Sec-Fetch-Mode": "navigate",
             "Sec-Fetch-Dest": "document",
@@ -56,9 +55,9 @@ def run_osint_check(email_to_check):
                 headers["Referer"] = pre_get_url
                 pre_resp = session.get(pre_get_url, headers=headers)
                 
-                forms = re.findall(r'(<form.*kuratör</form>|<form.*?</form>)', pre_resp.text, re.DOTALL | re.IGNORECASE)
+                forms = re.findall(r'(<form.*?</form>)', pre_resp.text, re.DOTALL | re.IGNORECASE)
                 for form_html in forms:
-                    if 'user[email]' in form_html or 'user[login]' in form_html:
+                    if 'user[email]' in form_html or 'user[login]' in form_html or 'belepes_email' in form_html:
                         action_match = re.search(r'action=["\']([^"\']+)["\']', form_html, re.IGNORECASE)
                         if action_match:
                             action_path = action_match.group(1)
@@ -105,6 +104,9 @@ def run_osint_check(email_to_check):
                 response = session.get(target_post_url, params=payload, headers=headers)
 
             response_text = response.text
+
+            # DEBUG KIÍRÁS A VÁLASZRÓL
+            print(f"[DEBUG VÁLASZ] [{name}] {response_text[:300]}")
 
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] [{name}] Rate-limit / túl sok kérés észlelve!")
