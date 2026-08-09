@@ -1,7 +1,7 @@
 [
   {
     "name": "Moly",
-    "url": "https://moly.hu/users",
+    "url": "https://moly.hu/tagok",
     "pre_get_url": "https://moly.hu/regisztracio",
     "method": "POST",
     "check_type": "keyword",
@@ -9,11 +9,13 @@
     "data": {
       "utf8": "✓",
       "authenticity_token": "",
-      "user[username]": "TestUser9988",
+      "user[login]": "TestUser9988",
       "user[email]": "{email}",
+      "user[first_name]": "",
       "user[password]": "DummyPassword123!",
       "user[password_confirmation]": "DummyPassword123!",
-      "user[agreement]": "1",
+      "user[accepted_terms_]": "0",
+      "user[accepted_terms]": "1",
       "commit": "Regisztráció"
     }
   }
