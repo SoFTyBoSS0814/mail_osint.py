@@ -1,11 +1,11 @@
 [
   {
     "name": "Moly",
-    "url": "https://moly.hu/regisztracio",
+    "url": "https://moly.hu/users",
     "pre_get_url": "https://moly.hu/regisztracio",
     "method": "POST",
     "check_type": "keyword",
-    "keyword": "Már regisztráltak ezzel az emailcímmel.",
+    "keyword": "Már regisztráltak ezzel az emailcímmel",
     "data": {
       "utf8": "✓",
       "authenticity_token": "",
@@ -13,6 +13,7 @@
       "user[email]": "{email}",
       "user[password]": "DummyPassword123!",
       "user[password_confirmation]": "DummyPassword123!",
+      "user[agreement]": "1",
       "commit": "Regisztráció"
     }
   }
