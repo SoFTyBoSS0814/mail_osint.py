@@ -11,10 +11,8 @@
       "authenticity_token": "",
       "user[login]": "TestUser{random}",
       "user[email]": "{email}",
-      "user[first_name]": "",
       "user[password]": "DummyPassword123!",
       "user[password_confirmation]": "DummyPassword123!",
-      "user[accepted_terms_]": "0",
       "user[accepted_terms]": "1",
       "commit": "Regisztráció"
     }
