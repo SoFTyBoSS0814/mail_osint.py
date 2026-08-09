@@ -113,16 +113,16 @@ def run_osint_check(email_to_check):
 
             response_text = response.text
 
-            print(f"[DEBUG VÁLASZ] [{name}] Status: {response.status_code} | Hossz: {len(response_text)} | Raw: {repr(response_text[:100])}")
+            print(f"[DEBUG VÁLASZ] [{name}] Status: {response.status_code} | Hossz: {len(response_text)} | Headers: {dict(response.headers)}")
 
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] [{name}] Rate-limit / túl sok kérés észlelve!")
             elif check_type == "keyword":
                 keyword = item.get("keyword", "")
                 if keyword and keyword in response_text:
-                    print(f"[+] [{name}] A kulcsszó megtalálható: '{keyword}'.")
+                    print(f"[+] [{name}] A fiók LÉTEZIK (A kulcsszó megtalálható: '{keyword}').")
                 else:
-                    print(f"[-] [{name}] A kulcsszó nem található.")
+                    print(f"[-] [{name}] A fiók NEM LÉTEZIK (A kulcsszó nem található).")
             else:
                 print(f"[?] [{name}] Ismeretlen check_type: {check_type}")
 
