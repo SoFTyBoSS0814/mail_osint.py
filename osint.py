@@ -2,6 +2,7 @@ import json
 import sys
 import requests
 import re
+import random
 from urllib.parse import urlparse, urljoin
 
 def load_json(file_path):
@@ -27,7 +28,6 @@ def run_osint_check(email_to_check):
         method = item.get("method", "POST").upper()
         check_type = item.get("check_type", "keyword")
         
-        # Teljes körű modern böngészős fejlécek
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
@@ -55,7 +55,6 @@ def run_osint_check(email_to_check):
                 headers["Referer"] = pre_get_url
                 pre_resp = session.get(pre_get_url, headers=headers)
                 
-                # Okos form keresés a helyes POST URL-hez
                 forms = re.findall(r'(<form.*?</form>)', pre_resp.text, re.DOTALL | re.IGNORECASE)
                 for form_html in forms:
                     if 'user[email]' in form_html or 'user[login]' in form_html:
@@ -65,7 +64,6 @@ def run_osint_check(email_to_check):
                             target_post_url = urljoin(domain, action_path)
                             break
 
-                # Token kinyerése
                 token_match = re.search(r'name=["\']authenticity_token["\'][^>]*value=["\']([^"\']+)["\']', pre_resp.text, re.IGNORECASE)
                 if not token_match:
                     token_match = re.search(r'value=["\']([^"\']+)["\'][^>]*name=["\']authenticity_token["\']', pre_resp.text, re.IGNORECASE)
@@ -79,12 +77,17 @@ def run_osint_check(email_to_check):
 
             headers["Referer"] = pre_get_url
 
+            # Egyedi véletlenszám generálása ehhez a futtatáshoz
+            rand_suffix = str(random.randint(100000, 999999))
+
             payload = {}
             for key, value in raw_data.items():
                 if key in extracted_tokens and (value == "" or value is None):
                     payload[key] = extracted_tokens[key]
                 elif isinstance(value, str):
-                    payload[key] = value.replace("{email}", email_to_check)
+                    val = value.replace("{email}", email_to_check)
+                    val = val.replace("{random}", rand_suffix)
+                    payload[key] = val
                 else:
                     payload[key] = value
             
@@ -100,9 +103,6 @@ def run_osint_check(email_to_check):
             response_text = response.text
 
             print(f"[DEBUG] [{name}] Végleges POST URL: {target_post_url} | HTTP Státusz: {response.status_code}")
-            
-            if response.status_code == 500:
-                print(f"[DEBUG] Szerverhiba válasz részlet: {response_text[:300]}")
 
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] [{name}] Rate-limit / túl sok kérés észlelve!")
