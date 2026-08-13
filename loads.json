@@ -15,7 +15,8 @@
       "user[password_confirmation]": "DummyPassword123!",
       "user[accepted_terms]": "1",
       "commit": "Regisztráció"
-    },
+    }
+  },
   {
     "name": "Gyakorikerdesek",
     "url": "https://www.gyakorikerdesek.hu/jquery/regisztracio.php",
