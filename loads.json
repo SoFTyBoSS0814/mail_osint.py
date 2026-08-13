@@ -1,21 +1,44 @@
 [
   {
-    "name": "Facebook",
-    "url": "https://www.facebook.com/login/identify/?ctx=recover&search_source=search_history",
-    "pre_get_url": "https://www.facebook.com/login/identify/",
+    "name": "Moly.hu",
+    "url": "https://moly.hu/tagok",
+    "pre_get_url": "https://moly.hu/regisztracio",
     "method": "POST",
     "check_type": "keyword",
-    "keyword": "A keresett feltételnek megfelelő fiók",
+    "keyword": "Már regisztráltak ezzel az emailcímmel",
+    "data": {
+      "utf8": "✓",
+      "authenticity_token": "",
+      "user[login]": "TestUser{random}",
+      "user[email]": "{email}",
+      "user[password]": "DummyPassword123!",
+      "user[password_confirmation]": "DummyPassword123!",
+      "user[accepted_terms]": "1",
+      "commit": "Regisztráció"
+    },
+  {
+    "name": "Gyakorikerdesek",
+    "url": "https://www.gyakorikerdesek.hu/jquery/regisztracio.php",
+    "pre_get_url": "https://www.gyakorikerdesek.hu/belepes",
+    "method": "POST",
+    "check_type": "keyword",
+    "keyword": "Ezzel az e-mail címmel már regisztráltál korábban",
     "headers": {
       "Content-Type": "application/x-www-form-urlencoded",
-      "Origin": "https://www.facebook.com",
-      "Referer": "https://www.facebook.com/login/identify/",
+      "X-Requested-With": "XMLHttpRequest",
+      "Origin": "https://www.gyakorikerdesek.hu",
+      "Referer": "https://www.gyakorikerdesek.hu/belepes",
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     },
     "data": {
+      "nev": "user_{random}",
       "email": "{email}",
-      "did_submit": "Search",
-      "lsd": ""
+      "jelszo_1": "DummyPassword123!",
+      "jelszo_2": "DummyPassword123!",
+      "publikus_nev": "0",
+      "adatvedelem_0": "1",
+      "elmult16_0": "1",
+      "hirlevel_0": "1"
     }
   }
 ]
