@@ -1,16 +1,16 @@
 [
   {
     "name": "GoldenGate",
-    "url": "http://www.goldengate.hu/registration",
-    "pre_get_url": "http://www.goldengate.hu/registration",
+    "url": "https://www.goldengate.hu/registration",
+    "pre_get_url": "https://www.goldengate.hu/registration",
     "method": "POST",
     "check_type": "keyword",
     "keyword": "már létezik",
     "headers": {
       "Content-Type": "application/x-www-form-urlencoded",
       "X-Requested-With": "XMLHttpRequest",
-      "Origin": "http://www.goldengate.hu",
-      "Referer": "http://www.goldengate.hu/registration",
+      "Origin": "https://www.goldengate.hu",
+      "Referer": "https://www.goldengate.hu/registration",
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     },
     "data": {
