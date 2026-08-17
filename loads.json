@@ -1,25 +1,25 @@
 [
-{
-  "name": "GoldenGate",
-  "url": "https://goldengate.hu/felhasznalo/regisztracio",
-  "pre_get_url": "https://goldengate.hu/felhasznalo/regisztracio",
-  "method": "POST",
-  "check_type": "keyword",
-  "keyword": "már létezik",
-  "headers": {
-    "Content-Type": "application/x-www-form-urlencoded",
-    "X-Requested-With": "XMLHttpRequest",
-    "Origin": "https://goldengate.hu",
-    "Referer": "https://goldengate.hu/felhasznalo/regisztracio",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-  },
-  "data": {
-    "user_name": "TestUser{random}",
-    "jelszo1": "DummyPassword123!",
-    "jelszo2": "DummyPassword123!",
-    "email": "{email}",
-    "accept_terms": "1",
-    "enable_newsletter": "2"
+  {
+    "name": "GoldenGate",
+    "url": "http://www.goldengate.hu/registration",
+    "pre_get_url": "http://www.goldengate.hu/registration",
+    "method": "POST",
+    "check_type": "keyword",
+    "keyword": "már létezik",
+    "headers": {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-Requested-With": "XMLHttpRequest",
+      "Origin": "http://www.goldengate.hu",
+      "Referer": "http://www.goldengate.hu/registration",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    },
+    "data": {
+      "user_name": "TestUser{random}",
+      "jelszo1": "DummyPassword123!",
+      "jelszo2": "DummyPassword123!",
+      "email": "{email}",
+      "accept_terms": "1",
+      "enable_newsletter": "2"
+    }
   }
-}
 ]
