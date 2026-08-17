@@ -11,13 +11,14 @@
       "X-Requested-With": "XMLHttpRequest",
       "Origin": "https://www.goldengate.hu",
       "Referer": "https://www.goldengate.hu/",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Cookie": "PHPSESSID=7mjutpesf9d1pavb7k2u5np181; over18_checked=checked"
     },
     "data": {
       "op": "login",
       "user_name": "{email}",
       "password": "DummyPassword123!",
-      "cf-turnstile-response": "1.ynlNfmWBnls8fsenRJvB3VIm7YwDDZhtYORFo83RLUth1Hf3M2OYCFUdmuORZmBrmfngJ1lRJlIF_MqkmK_43_AQFn1naDPdqMw-gpdytEC7d-YaoYV0hV0iSv7Ite6iWXyKXT8REEWXWYvPBK4jEUSSxnXjRe7PsoQqBLxbENf24UeOGTs_HvVb-xuN4hYmIu-4obCBFbDm98CuaSKI0ph_nuGvyRK7xuEYO4TJ2Sbwo_-gkWb2-SjTbDoS1B1otcVwVe_zefG8sFwowGaej9pNCh3f3UD1AS64i5OnuFRxdCnr6M2RFPWawYSSFcOwNcudm0_Jc-5dO4ZryP_lix8RO87aoH7EBeStpHqXd5jVotmUML3Oci-Rh_q9UDLWDE3wDCKQNqavpqBpcdRhLfcnk6RnP8B7DdVIOOkmvtMNSAPvHeZEET6jDJJYmYuMNl321Fs_VT7E63JR2SFGRnA8-fh6ORCfhpr6GD9wffbm40wffL8IW1X64Yj4he8EwSroMDnMtKWIUnx-63enjsjQj5JtAoSSS2ybmNdksAlY5bDfOjEIt_YsGWkYKz1Sr5nE9B7Y0R2msd5COXAc7uB5ySJoqT3IPsYKe8UnWrY-mTHpK_6okTnpd0h80hMoEK_PFCCQ6RL61dbGA-xg4I0fb5YCSCk3kDtDU1PekiGyIVS3mbAuPCFc-RmQHv1d.oBrvcw4uqlli7D8iSnHj1g.44a9edca9ceabea2b41845e36f1a2aafdce4e7a990ca19533c3447a9563911b0"
+      "cf-turnstile-response": "dummy"
     }
   }
 ]
