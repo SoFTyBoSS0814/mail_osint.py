@@ -15,7 +15,7 @@
     },
     "data": {
       "user_name": "TestUser{random}",
-      "jelszo": "DummyPassword123!",
+      "jelszo1": "DummyPassword123!",
       "jelszo2": "DummyPassword123!",
       "email": "{email}",
       "accept_terms": "1",
