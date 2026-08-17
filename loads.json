@@ -1,25 +1,23 @@
 [
   {
-    "name": "GoldenGate",
-    "url": "https://www.goldengate.hu/registration",
-    "pre_get_url": "https://www.goldengate.hu/registration",
+    "name": "GoldenGate-Login",
+    "url": "https://www.goldengate.hu/jquery/login.php",
+    "pre_get_url": "https://www.goldengate.hu/",
     "method": "POST",
     "check_type": "keyword",
-    "keyword": "már létezik",
+    "keyword": "Hibás felhasználónév vagy jelszó",
     "headers": {
       "Content-Type": "application/x-www-form-urlencoded",
       "X-Requested-With": "XMLHttpRequest",
       "Origin": "https://www.goldengate.hu",
-      "Referer": "https://www.goldengate.hu/registration",
+      "Referer": "https://www.goldengate.hu/",
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     },
     "data": {
-      "user_name": "TestUser{random}",
-      "jelszo1": "DummyPassword123!",
-      "jelszo2": "DummyPassword123!",
-      "email": "{email}",
-      "accept_terms": "1",
-      "enable_newsletter": "2"
+      "op": "login",
+      "user_name": "{email}",
+      "password": "DummyPassword123!",
+      "cf-turnstile-response": "dummy_token_test"
     }
   }
 ]
