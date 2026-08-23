@@ -1,24 +1,43 @@
 [
   {
-    "name": "GoldenGate-Login",
-    "url": "https://www.goldengate.hu/jquery/login.php",
-    "pre_get_url": "https://www.goldengate.hu/",
+    "name": "Moly.hu",
+    "url": "https://moly.hu/tagok",
+    "pre_get_url": "https://moly.hu/regisztracio",
     "method": "POST",
     "check_type": "keyword",
-    "keyword": "Hibás felhasználónév vagy jelszó",
+    "keyword": "Már regisztráltak ezzel az emailcímmel",
+    "data": {
+      "utf8": "✓",
+      "authenticity_token": "",
+      "user[login]": "TestUser{random}",
+      "user[email]": "{email}",
+      "user[password]": "DummyPassword123!",
+      "user[password_confirmation]": "DummyPassword123!",
+      "user[accepted_terms]": "1",
+      "commit": "Regisztráció"
+    }
+  },
+  {
+    "name": "Gyakorikerdesek",
+    "url": "https://www.gyakorikerdesek.hu/jquery/regisztracio.php",
+    "pre_get_url": "https://www.gyakorikerdesek.hu/belepes",
+    "method": "POST",
+    "check_type": "keyword",
+    "keyword": "Ezzel az e-mail címmel már regisztráltál korábban",
     "headers": {
       "Content-Type": "application/x-www-form-urlencoded",
       "X-Requested-With": "XMLHttpRequest",
-      "Origin": "https://www.goldengate.hu",
-      "Referer": "https://www.goldengate.hu/",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Cookie": "PHPSESSID=7mjutpesf9d1pavb7k2u5np181; over18_checked=checked"
+      "Origin": "https://www.gyakorikerdesek.hu",
+      "Referer": "https://www.gyakorikerdesek.hu/belepes",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     },
     "data": {
-      "op": "login",
-      "user_name": "{email}",
-      "password": "DummyPassword123!",
-      "cf-turnstile-response": "dummy"
+      "nev": "user_{random}",
+      "email": "{email}",
+      "jelszo_1": "DummyPassword123!",
+      "jelszo_2": "DummyPassword123!",
+      "publikus_nev": "0",
+      "adatvedelem_0": "1",
+      "elmult16_0": "1",
+      "hirlevel_0": "1"
     }
-  }
-]
