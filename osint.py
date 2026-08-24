@@ -113,8 +113,6 @@ def run_osint_check(email_to_check):
 
             response_text = response.text
 
-            print(f"[DEBUG VÁLASZ] [{name}] Status: {response.status_code} | Hossz: {len(response_text)} | Headers: {dict(response.headers)}")
-
             if "Túl sok sikertelen" in response_text or "túl sok" in response_text.lower():
                 print(f"[!] [{name}] Rate-limit / túl sok kérés észlelve!")
             elif check_type == "keyword":
@@ -133,6 +131,6 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Használat: python3 osint.py <email_cim>")
         sys.exit(1)
-      
+        
     target_email = sys.argv[1].strip()
     run_osint_check(target_email)
